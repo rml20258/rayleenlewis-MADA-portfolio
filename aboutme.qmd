@@ -2,30 +2,30 @@
 title: "About me"
 ---
 
-# A bit about me
+## Here's a little bit about me
 
 ### Education and Work Experience
 
 UGA is my final stop through the largest 3 institutes/universities in Georgia.
 
-I earned my B.S. in Biomedical Engineering with a psychology minor from Georgia Tech. My research focused on deep brain stimulation, which has proven effective as treatment for treatment-resistant major depressive disorder and Parkinson's disease.
+I earned my B.S. in Biomedical Engineering with a psychology minor from **Georgia Tech**. My research focused on deep brain stimulation, which has proven effective as treatment for treatment-resistant major depressive disorder and Parkinson's disease.
 
-Next, I earned my MPH with a concentration in Biostatistics from Georgia State University, where I researched posttraumatic stress symptoms in children and adolescents following natural disasters.
+Next, I earned my MPH with a concentration in Biostatistics from **Georgia State University**, where I researched posttraumatic stress symptoms in children and adolescents following natural disasters.
 
-Through connections I made at Georgia State, I landed a position as an epidemiologist at the CDC studying human papillomavirus (HPV) in August 2016, which was a big pivot from my focus in mental health, but I found I **love** studying infectious diseases more. Eight and a half years later, I'm still on the same great team doing really cool research on the impact and effectiveness of the HPV vaccine and the epidemiology of HPV and HPV-attributable diseases.
+Through connections I made at Georgia State, I landed a position as an epidemiologist at the **CDC** studying human papillomavirus (**HPV**) in August 2016, which was a big pivot from my focus in mental health, but I found I love studying infectious diseases more. Eight and a half years later, I'm still on the same great team doing really cool research on the impact and effectiveness of the HPV vaccine and the epidemiology of HPV and HPV-attributable diseases.
 
-Despite already having a job I love, I made the somewhat ridiculous decision to pursue a PhD and started at UGA Fall 2022. I'm a 3rd year part-time student on the Data Analysis and Modeling track, and I'm very happy to report that I'm in my last semester of classes and hope to graduate Fall 2025 (*the more people I tell this timeline to, the more accountable I'll be to actually hit it...*).
+Despite already having a job I love, I made the somewhat ridiculous decision to pursue a PhD and started at **UGA** Fall 2022. I'm a 3rd year part-time student on the Data Analysis and Modeling track, and I'm very happy to report that I'm in my last semester of classes and hope to graduate Fall 2025 (*the more people I tell this timeline to, the more accountable I'll be to actually hit it...*).
 
 ### Statistical and Data Analytic Experience
 
-I've had a lot of opportunities to work with different types of data through my job. I've spent many years working with NHANES data, which is complex survey data. I've also worked with insurance claims databases (i.e., MarketScan), multi-site surveillance projects, single site research studies, and I've contributed to a couple of systematic reviews (although I hope to retire without every working on another of these). I primarily work with binary outcomes (HPV positive/negative), but I'm expanding to quantitative assessments of HPV antibody concentrations through my dissertation work.
+I've had a lot of opportunities to work with different types of data through my job. I've spent many years working with NHANES data, which is complex survey data. I've also worked with insurance claims databases (i.e., MarketScan), multi-site surveillance projects, single site research studies, and I've contributed to a couple of systematic reviews (although I hope to retire without every working on another of these). I primarily work with binary outcomes (HPV positive/negative), but I'm expanding to quantitative assessments of HPV antibody concentrations through my dissertation work. I almost exclusively code in SAS and SUDAAN (a SAS-callable program used for complex survey analysis). I've done coursework in R, but it is not my preferred language.
 
-Analytic techniques I've used professional include complex survey analysis, generalized linear models, and JoinPoint regression (aka segmented linear regression). I've also taken courses in structural equation modeling and multivariate regression. For anyone looking for an interesting, approachable quantitative course, I cannot recommend Dr. Shiyu Wang's Multivariate Methods course (ERSH 8350) in the Department of Education enough!
+Analytic techniques I've used professionally include complex survey analysis, generalized linear models, and JoinPoint regression (aka segmented linear regression). As part of coursework, I've used structural equation modeling, finite mixture modeling, classfication techniques, and other multivariate methods. For anyone looking for an interesting, approachable, quantitative course, I cannot recommend Dr. Shiyu Wang's Multivariate Methods course (ERSH 8350) in the Department of Education enough!
 
 ### Fun facts
 
-Outside of work and school, my favorite hobby is bouldering (rock climbing short walls without ropes). Running is my favorite stress-reliever, even though I'm not very good at it. I did finish my second Triple Peach this year, a three race series that finishes with a half marathon on Thanksgiving. Any other free time is spent playing board games or going to Atlanta United soccer games, Georgia Tech football games, and plays at the Fox Theater.
+Outside of work and school, my favorite hobby is bouldering (rock climbing short walls without ropes). Running is my favorite stress-reliever, even though I'm not very good at it. I did finish my second Triple Peach this year, which is a three race series that finishes with a half marathon on Thanksgiving. Any other free time is spent playing board games or going to Atlanta United soccer games, Georgia Tech football games, and plays at the Fox Theater.
 
-Related to my love of board games, during my first semester at UGA, I took Amy Winter's Intro to R course. For my final project, I chose to use publicly available data on board games to determine if cooperative board games had a higher average rating than competitive games. Spoiler, they don't, but I think that's likely due to selection bias since the serious (and competitive) board game fanatics are more likely to rate games online than casual players. But, I found my data on [Kaggle](https://www.kaggle.com/datasets), which has tons of free datasets if anyone is in need of data for class projects.
+Related to my love of board games, during my first semester at UGA, I took Amy Winter's Intro to R course. For my final project, I chose to use publicly available data on board games to determine if cooperative board games had a higher average rating than competitive games. Spoiler, they don't, but I think that's likely due to selection bias since the serious board game fanatics are more likely rate games online than casual players. But, I found my data on [Kaggle](https://www.kaggle.com/datasets), which has tons of free datasets for anyone in need of data for class projects.
 
-One of my 2024 highlights was attending the 2024 NFL Draft in Detroit after winning an "Enter for a chance to win" package. Apparently those things really do give out prizes! ![](C:/Users/lry9/Desktop/MADA-course/rayleenlewis-MADA-portfolio/Intro-NFLdraft.jpg)
+One of my 2024 highlights was attending the 2024 NFL Draft in Detroit after winning an "Enter for a chance to win" package. Apparently those things really do give out prizes! ![](Intro-NFLdraft.jpg){width="400"}
