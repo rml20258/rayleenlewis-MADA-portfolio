@@ -1,16 +1,13 @@
 ---
 title: "My website and data analysis portfolio"
+author: "Rayleen Lewis"
 ---
 
-**Feel free to change the text below any way you want 😁!**
+# Welcome to a group "MADA"bout data
 
-# Hello
+### Spring 2024
 
-### And hello again
+Welcome to **my website** and *data analysis portfolio,* and sorry for the terrible pun. 😁
 
-Welcome to **my website** and _data analysis portfolio._ 
-
-
-* Please use the `Menu Bar` above to look around.
-* Have fun!
-
+-   Please use the `Menu Bar` above to look around.
+-   Have fun!
