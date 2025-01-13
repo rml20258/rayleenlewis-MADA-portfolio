@@ -39,7 +39,7 @@ _Write a summary of your project._
 _Provide enough background on your topic that others can understand the why and how of your analysis_ 
 
 ## Description of data and data source
-_Describe what the data is, what it contains, where it is from, etc. Eventually this might be part of a methods section._
+The dataset consists of 5 variables, the three original variables (Height, Weight, and Gender) and two newly created variables (GPA and Emphasis). GPA is a numeric variable with values between 0 and 4.0 (inclusive). Emphasis is a categorical variable referring to the emphasis of the subject's Epi/Biostat PhD; the categories are 'Epi', 'Biostat', and 'DAM'.
 
 ## Questions/Hypotheses to be addressed
 _State the research questions you plan to answer with this analysis._
