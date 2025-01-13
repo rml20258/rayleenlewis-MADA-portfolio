@@ -123,7 +123,7 @@
     "href": "starter-analysis-exercise/products/report/starter-analysis-report.html#description-of-data-and-data-source",
     "title": "Manuscript/Report Template for a Data Analysis Project",
     "section": "2.2 Description of data and data source",
-    "text": "2.2 Description of data and data source\nDescribe what the data is, what it contains, where it is from, etc. Eventually this might be part of a methods section."
+    "text": "2.2 Description of data and data source\nThe dataset consists of 5 variables, the three original variables (Height, Weight, and Gender) and two newly created variables (GPA and Emphasis). GPA is a numeric variable with values between 0 and 4.0 (inclusive). Emphasis is a categorical variable referring to the emphasis of the subject’s Epi/Biostat PhD; the categories are ‘Epi’, ‘Biostat’, and ‘DAM’."
   },
   {
     "objectID": "starter-analysis-exercise/products/report/starter-analysis-report.html#questionshypotheses-to-be-addressed",
