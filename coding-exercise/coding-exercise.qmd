@@ -62,8 +62,8 @@ ggplot(data=obj1, aes(x = infant_mortality, y = life_expectancy)) + geom_point()
   labs(title = "Life expectancy as a function of infant mortality")
 
 #Plotting life expectancy as a function of population
-ggplot(data=obj2, aes(x = population, y = life_expectancy)) + geom_point() + 
-  labs(title = "Life expectancy as a function of population")
+ggplot(data=obj2, aes(x = population, y = life_expectancy)) + geom_point() +  scale_x_continuous(trans='log10') + 
+  labs(title = "Life expectancy as a function of population", x = "Population (log10 scale)")
 
 ```
 
@@ -79,8 +79,8 @@ ggplot(data=africadata, aes(x = infant_mortality, y = life_expectancy)) +
 
 #Plotting life expectancy as a function of population
 ggplot(data=africadata, aes(x = population, y = life_expectancy)) + 
-  geom_point(aes(color = country)) + 
-  labs(title = "Life expectancy as a function of population")
+  geom_point(aes(color = country)) + scale_x_continuous(trans='log10') + 
+  labs(title = "Life expectancy as a function of population", x = "Population (log10 scale)")
 
 ```
 
@@ -133,8 +133,8 @@ ggplot(data=yr2000, aes(x = infant_mortality, y = life_expectancy)) +
 
 #Plotting life expectancy as a function of population
 ggplot(data=yr2000, aes(x = population, y = life_expectancy)) + 
-  geom_point() + 
-  labs(title = "Life expectancy as a function of population in 2000")
+  geom_point() +  scale_x_continuous(trans='log10') +
+  labs(title = "Life expectancy as a function of population in 2000", x = "Population (log10 scale)")
 ```
 The negative association between life expectancy and infant mortality persisted, but there no longer appears to be a relationship between life expectancy and population size. This will be explored statistically in the next Step. 
 
