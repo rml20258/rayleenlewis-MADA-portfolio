@@ -3,6 +3,7 @@ title: "R Coding Exercise"
 ---
 
 ## Step 1: install packages (output suppressed)
+
 ```{r,include = F}
 # Setting up all libraries needed for the script
 library(tidyverse)
@@ -10,10 +11,18 @@ library(tidyverse)
 # loading dslabs package to access Gapminder data
 library(dslabs)
 
+library(here) # to set directory 
+library(dplyr)
+install.packages("kableExtra") # this packege is to use to create an aestatic table 
+library(knitr)
+library(kableExtra)
+
 ```
 
 ## Step 2: Getting an overview of the Gapminder data
+
 Reviewing the help file, structure, summary, and object type of the Gapminder data
+
 ```{r}
 #Produce help file for Gapminder data
 help(gapminder)
@@ -25,7 +34,9 @@ summary(gapminder)
 #Determining the object type of the data
 class(gapminder)
 ```
+
 ## Step 3: Creating dataset restricted to African countries
+
 ```{r}
 #Restricting data to African countries
 
@@ -39,8 +50,9 @@ summary(africadata)
 ```
 
 ## Step 4: Creating two objects based on African data
-obj1 contains 'infant_mortality' and 'life_expectancy'
-obj2 contains 'population' and 'life_expectancy'
+
+obj1 contains 'infant_mortality' and 'life_expectancy' obj2 contains 'population' and 'life_expectancy'
+
 ```{r}
 #Creating object 1 with 'infant_mortality' and 'life_expectancy'
 obj1 <- africadata %>% select(c(infant_mortality, life_expectancy))
@@ -54,8 +66,11 @@ obj2 <- africadata %>% select(c(population, life_expectancy))
 str(obj2)
 summary(obj2)
 ```
+
 ## Step 5: Initial plotting
-Two initial relationships with life expectancy were explored, the relationship with infant mortality and population size. These are modeled in the scatterplots below.  
+
+Two initial relationships with life expectancy were explored, the relationship with infant mortality and population size. These are modeled in the scatterplots below.
+
 ```{r}
 #Plotting life expectancy as a function of infant mortality
 ggplot(data=obj1, aes(x = infant_mortality, y = life_expectancy)) + geom_point() + 
@@ -87,7 +102,9 @@ ggplot(data=africadata, aes(x = population, y = life_expectancy)) +
 Both graphs, but particularly the graph of life expectancy as a function of population confirmed this. The observed "streaks" are independent countries' life expectancy trajectories.
 
 ## Step 6: More data processing - selecting year with most complete data
+
 To determine the level of missingness in infant mortality by year, I looked at both how the missingness was distributed by year and determined the years with the least amount of missingness (i.e., most complete data)
+
 ```{r}
 #To determine the number of infant mortality data points by year, I filtered the africadata to restrict to only rows with missing infant mortality, grouped by year, and counted the number of rows in each year using n() within the summarize statement
 
@@ -109,9 +126,7 @@ comp_year <- africadata %>%
 comp_year
 ```
 
-Years 1960-1981 and 2016 all have missing infant mortlity data for at least one country. 
-Data is most complete for years 1982-2015. Year 2000 was selected for use in the remaining exercises due to its completeness.
-
+Years 1960-1981 and 2016 all have missing infant mortlity data for at least one country. Data is most complete for years 1982-2015. Year 2000 was selected for use in the remaining exercises due to its completeness.
 
 ```{r}
 #Restricting africadata to only data from the year 2000
@@ -123,8 +138,11 @@ str(yr2000)
 summary(yr2000)
 
 ```
+
 ## Step 7: Plots for year 2000
-I reanalyzed the relationships described in Step 5 (relationships between life expectancy and infant mortality and population size) restricteed ot data from the year 2000. 
+
+I reanalyzed the relationships described in Step 5 (relationships between life expectancy and infant mortality and population size) restricteed ot data from the year 2000.
+
 ```{r}
 #Plotting life expectancy as a function of infant mortality
 ggplot(data=yr2000, aes(x = infant_mortality, y = life_expectancy)) + 
@@ -136,10 +154,12 @@ ggplot(data=yr2000, aes(x = population, y = life_expectancy)) +
   geom_point() +  scale_x_continuous(trans='log10') +
   labs(title = "Life expectancy as a function of population in 2000", x = "Population (log10 scale)")
 ```
-The negative association between life expectancy and infant mortality persisted, but there no longer appears to be a relationship between life expectancy and population size. This will be explored statistically in the next Step. 
+
+The negative association between life expectancy and infant mortality persisted, but there no longer appears to be a relationship between life expectancy and population size. This will be explored statistically in the next Step.
 
 ## Step 8: Simple models to assess relationships between life expectancy and both infant mortality and population size
-Simple linear regression was used to fit 2 models, one for each predictor (infant mortality and population size), modeling their effect on life expectancy. 
+
+Simple linear regression was used to fit 2 models, one for each predictor (infant mortality and population size), modeling their effect on life expectancy.
 
 ```{r}
 #Fitting first linear model with infant_mortality as a predictor of life expectancy
@@ -148,8 +168,8 @@ fit1 <- lm(life_expectancy ~ infant_mortality, data = yr2000)
 summary(fit1)
 
 ```
-Infant mortality was significantly, negatively associated with life expectancy (P<0.001). 
 
+Infant mortality was significantly, negatively associated with life expectancy (P\<0.001).
 
 ```{r}
 #Fitting second linear model with population as a predictor of life expectancy
@@ -158,4 +178,178 @@ fit2 <- lm(life_expectancy ~ population, data = yr2000)
 summary(fit2)
 
 ```
+
 Population was not significantly associated with life expectancy (P=0.616).
+
+# Part 2
+
+### Contributors
+
+Muhammad Nasir contibutes in this part
+
+# Step 2.1. Overview of the data
+
+```{r}
+library(dslabs)
+help("mice_weights")
+
+
+#Look at structure and summary of Mice_weights data 
+str(mice_weights)
+summary(mice_weights)
+
+#Determining the object type of the data
+class(mice_weights)
+```
+
+In this project, I use dataset "mice_weights" from dslabs packages. This data contains Body weights, bone density, and percent fat for mice under two diets: chow and high fat. Data provided by Karen Svenson from Jackson Laboratories. Funding to generate these data came from NIH grant P50 GM070683 awarded to Gary Churchill.
+
+There are 7 variables and 780 observations in this data.Variables include body_weight, bone_density, percent_fat, sex, diet, gen, and litter:
+
+Details - body_weight. Body weight in grams at 19 weeks. - bone_density. Body density. - percent_fat. Percent fat. - sex. The sex of the mice. - diet. The diet of the mice: chow or high fat. - gen. These are outbread mice. This variable denotes the generation. - litter. Which of two litters mice belong to.
+
+# Step 2.2. Creating object/ dataset from mice_weights
+
+Now, I am going to create object from the data for further actions (data cleaning and data analysis)
+
+```{r}
+mice <- mice_weights 
+
+head(mice) # check the data
+
+str(mice)
+```
+
+# Step 2.3. Data cleaning and Processing
+
+In this part, I do data cleaning, elleminating missing values, and creating new variables
+
+```{r}
+mice<- na.omit(mice)
+
+summary(mice)
+```
+
+```{r}
+plot2_1 <- mice %>% 
+  ggplot(aes(body_weight, fill = sex)) +
+  geom_density(alpha=0.4)+ # to set the tranparant of the color 
+  scale_fill_manual( values = c("F"= "green", "M" = "pink"))+ # to set the color of the area
+  theme_bw()+ # to create minimalistic style, it changes default plot into white. 
+  ggtitle("Figure 2.1. Mice Body Weight based on Sex") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold.italic"))+
+  xlab("Body Weight (grams) in 19 weeks")+
+  ylab("Density") +
+  labs(caption = "Sourse: Jackson Laboratories ") +
+  theme(plot.background = element_rect(color = "black", fill = NA, linewidth = 1)) # to create frame of the plot. 
+
+plot2_1
+
+figure_file = here("images","Figure 2.1. Mice Body Waight Based on sex.png") # to set up location for the pictures created 
+ggsave(filename = figure_file, plot=plot2_1) # save the pictures created 
+```
+
+Figure 2.1. shows the distribution of body weight of Mice in grams in 19 weeks. It can be seen that Male mice overall had higher body weight compared to female.
+
+```{r}
+plot2_2 <-  mice %>% 
+  ggplot(aes( x= gen, y=percent_fat, fill = sex)) +
+  geom_boxplot(alpha = 0.5)+
+  theme_bw()+ # to make the backround minimalistic and convert into white instead of grids 
+  scale_fill_manual(values = c("M" = "blue", "F" = "pink")) +  # Set fill color
+  scale_color_manual(values = c("M" = "darkblue", "F" = "darkred")) +  # Set border color
+  scale_x_discrete(breaks = c(4, 7, 8, 9, 11), # this is to specify the generation
+                   labels= c("Generation\n 4", "Generation\n 7 ", "Generation\n 8", "Generation\n 9", "Generation\n 11"))+ # this is to give lable for the generation
+  scale_y_continuous()+
+  labs(title = "Figure 2.2. Mice Bone Density by Sex and Generation", # create the title
+       x = "Generation of The Mice",
+       y = "Percent Fat", 
+       caption = "Sourse: Jackson Laboratories")+ 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold.italic")) + # to adjust the title position, size, and color
+   theme(plot.background = element_rect(color = "black", fill = NA, linewidth = 1)) # to create frame of the plot 
+
+ 
+plot2_2
+
+
+figure_file = here("images","Figure 2.2. Mice Bone Density by Generation and Sex.png") # to set up location for the pictures created 
+ggsave(filename = figure_file, plot=plot2_2) # save the pictures created 
+```
+
+From figure 2.2. we can see the percentage of fat of mice based on generation and sex. There are different average percent of fat between male and female mice across generation.
+
+Next, I am going to create plot the effect of body fat on bone density.
+
+```{r}
+plot2_3 <- ggplot(data = mice, aes(x= body_weight, y= bone_density))+
+  geom_point(aes(color = gen)) +
+  geom_smooth(method = "loess", se = FALSE)+
+  labs(
+    subtitle = "(Figure 2.3. Body Weight on Bone Density of the Mice )", 
+    y = "Bone Desnity ",
+    x = "Body Weight (Grams)",
+    caption = "Source: Gapminder Data"
+  ) + # to create the name of each axis
+  theme(
+    plot.background = element_rect(color = "black", size = 1), # Border around the entire plot (including title)
+    plot.subtitle = element_text(hjust = 0.5, vjust = -1, size = 12, color = "gray50", face = "bold.italic"), # to adjust the subtitle position, color and size (note, set vjust=185 for printed pictures, for website, set at 100 )
+    plot.caption = element_text(hjust = 1, vjust = -13, size = 10, color = "gray40"), # to adjust the subtitle position, color and size, hjust=horizontal and vjust= vertical 
+    plot.margin = margin(10, 10, 45, 10)) # (top, right, bottom, left) Increase the bottom margin to create space for the subtitle below the x-axis
+print(plot2_3)
+
+
+figure_file = here("images","Figure 2.3. Body Weight on Bone Density of the Mice.png") # to set up location for the pictures created 
+ggsave(filename = figure_file, plot=plot2_3) # save the pictures created 
+```
+
+I want to create plot for bone density by diet
+
+```{r}
+table2_1  <- mice %>%
+  group_by(gen) %>%  # Group data by generation
+  summarise(
+    avg_body_weight = mean(body_weight, na.rm = TRUE),  # Calculate average body weight
+    avg_bone_density = mean(bone_density, na.rm = TRUE),  # Calculate average bone density
+    avg_percent_fat = mean(percent_fat, na.rm = TRUE)  # Calculate average percent fat
+  ) %>%
+  rename(
+    Generation= gen, 
+    'Average Body Weigth' = avg_body_weight,
+    'Average Bone Density' =  avg_bone_density,
+    'Average Percent Fat' = avg_percent_fat
+  )
+
+table2_1%>%
+  kable("html", caption = "Table 2.1. Summary Table of Mice Data by Generation") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), 
+                full_width = F, position = "center") %>%
+  column_spec(1, bold = TRUE, color = "white", background = "darkblue") %>% # Style gen column
+  column_spec(2, background = "lightblue") %>%  # Style avg_body_weight column
+  column_spec(3, background = "lightgreen") %>% # Style avg_bone_density column
+  column_spec(4, background = "lightyellow") %>% # Style avg_percent_fat column
+  row_spec(0, bold = TRUE, color = "white", background = "gray") # Bold header row
+table2_1
+
+```
+
+# Step 2.4. Performing Statistical Models
+
+First, I want to perform simple linear model with body weight as a predictor of bone density of mice in the study
+
+```{r}
+model_1 <- lm(bone_density ~ body_weight, data = mice)
+summary(model_1)
+```
+
+From the model, the intercept is 0.398, meaning that the average bone density of mice is 0.398 when the body weight is zero. However, in the real world, it is not possible that mice had 0 gram body weight. The slop tells us the average increase of bone density for every gram in the increase of body weight. There is statistically significant relationship between body weight and bone density with p\<0.0001.
+
+I want to perform Analysis of Variance (ANOVA) to look at the average difference of percent fat for based on diet and generation.
+
+```{r}
+model_2 <- lm(percent_fat ~ diet + gen + diet*gen, data = mice)
+
+summary(model_2)
+anova(model_2)
+```
+
+Conclusion: 1. There is a statistically significant difference in the mean of percent fat between the different diet group with p\<0.0001. 2. There is a statistically significant difference in the mean of percent fat among the different generation with p\<0.0028. 3. There is no significant interaction between diet and generation.
