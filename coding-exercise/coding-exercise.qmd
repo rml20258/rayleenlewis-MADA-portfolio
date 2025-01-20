@@ -13,7 +13,7 @@ library(dslabs)
 
 library(here) # to set directory 
 library(dplyr)
-install.packages("kableExtra") # this packege is to use to create an aestatic table 
+#install.packages("kableExtra") # this packege is to use to create an aestatic table 
 library(knitr)
 library(kableExtra)
 
@@ -51,7 +51,8 @@ summary(africadata)
 
 ## Step 4: Creating two objects based on African data
 
-obj1 contains 'infant_mortality' and 'life_expectancy' obj2 contains 'population' and 'life_expectancy'
+obj1 contains 'infant_mortality' and 'life_expectancy' 
+obj2 contains 'population' and 'life_expectancy'
 
 ```{r}
 #Creating object 1 with 'infant_mortality' and 'life_expectancy'
