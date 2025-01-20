@@ -16,6 +16,7 @@ library(dplyr)
 install.packages("kableExtra") # this packege is to use to create an aestatic table 
 library(knitr)
 library(kableExtra)
+library(ggplot2)
 
 ```
 
