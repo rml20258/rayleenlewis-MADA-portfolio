@@ -8,6 +8,8 @@ I have needed to copy entire tables from PDFs of publications or from images in 
 
 As a learning example, I found a table online showing the [Dallas Cowboys' week 18 injury report](https://insidethestar.com/cowboys-vs-commanders-injury-report-whos-out-for-week-18). This table was small enough that it felt like a manageable test project, because you can see the effects of each step of processing. 
 
+![](cowboys-w18-injury-report.jpg){width="500"}
+
 This was also interesting to me personally because throughout the season, it felt like the Cowboys had many players in the same position get hurt. So, I was curious to see if there were multiple players out during the last week of the regular season who played the same position. 
 
 ### Setup
