@@ -18,7 +18,7 @@ website:
             file: data-exercise/data-exercise.qmd
     right:
       - icon: github 
-        href: https://github.com/rml20258/rayleenlewis-MADA-portfolio        
+        href: https://github.com/rml20258/rayleenlewis-MADA-portfolio
 format:
   html:
     theme: united
