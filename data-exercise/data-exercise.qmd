@@ -1,0 +1,104 @@
+---
+title: "An example of image processing"
+---
+
+
+# Inspiration
+I have needed to copy entire tables from PDFs of publications or from images in order to get the data in a usable format. For example, I may see a table in a paper that I would like to convert to a figure for a presentation. I decided to spend this week's module trying to find tools that could convert a PDF or image into usable data. 
+
+As a learning example, I found a table online showing the [Dallas Cowboys' week 18 injury report](https://insidethestar.com/cowboys-vs-commanders-injury-report-whos-out-for-week-18). This table was small enough that it felt like a manageable test project, because you can see the effects of each step of processing. 
+
+This was also interesting to me personally because throughout the season, it felt like the Cowboys had many players in the same position get hurt. So, I was curious to see if there were multiple players out during the last week of the regular season who played the same position. 
+
+### Setup
+
+Loading all necessary packages. Tesseract is the package that I'll use for extracting data from an image.
+
+```{r}
+library(tesseract) #for processing image files
+library(tidyverse) #for data processing/cleaning
+```
+
+
+### Reading in image
+The purpose of this code chunk is to read in the image and get the text into a tibble that can be analyzed. 
+```{r}
+# In layman's terms, this is telling R that the text it will be extracting is in English
+eng <- tesseract("eng")
+# Extracting text from the injury report image
+text <- tesseract::ocr("cowboys-w18-injury-report.jpg", engine = eng)
+# Getting a preview of the data
+cat(text)
+
+
+# Converting one large text chunk (character vector of length = 1) to a vector where each line is its own element in the vector (length = 16), using "/n" as the separator
+length(text)
+lines <- unlist(strsplit(text, "\n"))
+length(lines)
+
+# Next I needed to remove lines that didn't have data in them. I will apply my own column headers in the next step
+lines_reduced <- lines[5:15]
+
+# Process the lines vector into a structured tibble
+tibble_data <- lines_reduced %>%
+  # Convert to a tibble
+  tibble(raw_text = .) %>%
+  # Separate columns into the 8 columns defined below using space as a separator
+  separate(
+    raw_text, 
+    into = c("First_name", "Last_name", "Position", "Injury", "Wednesday_participation", "Thursday_participation", "Friday_participation", "Game_Status"), 
+    sep = "\\s+", 
+    fill = "right")%>%
+# Deleting the comma after each person's last name
+  mutate(Last_name = gsub(",", "", Last_name)) %>%
+  #Expanding position abbreviation to full position
+  mutate(Position = case_when(Position == "DE" ~ "Defensive end",
+                              Position == "C" ~ "Center",
+                              Position == "RB" ~ "Running back",
+                              Position == "T" ~ "Tackle",
+                              Position == "DT" ~ "Defensive tackle",
+                              Position == "S" ~ "Safety",
+                              Position == "G" ~ "Guard"))
+  
+print(tibble_data)
+
+```
+
+### Exploratory analyses
+#### Distribution of player position
+I wanted to look at the distribution of player position as a table and a bar chart.
+```{r}
+# Creating table of player positions among injured Cowboys players in week 18
+paste("Table of player position")
+table(tibble_data$Position)
+
+ggplot(tibble_data, aes(Position)) + geom_bar() + labs(title="Number of injured Cowboys players per position - Week 18")
+```
+Three defensive ends were listed on the injury report during Week 18. Two running backs and safetys were injured, as were one center, defensive tackle, guard, and tackle.
+
+
+#### Distribution of injury
+I also wanted to look at the distribution of injury as a table and a bar chart.
+```{r}
+# Creating table of injuries among injured Cowboys players in week 18
+paste("Table of injury location")
+table(tibble_data$Injury)
+
+ggplot(tibble_data, aes(Injury)) + geom_bar() + labs(title="Anatomic location of injuries among Cowboys players - Week 18")
+```
+
+After looking at these results, some more data cleaning needs to be done. The function that read the image misinterpretted some lower case l's as i's in illness. 
+
+```{r}
+tibble_data <- tibble_data %>%
+  mutate(Injury = if_else(Injury == "Ankle/Iliness", "Ankle/Illness", 
+                          if_else(Injury == "Iliness", "Illness", Injury)))
+
+# Creating table of injuries among injured Cowboys players in week 18
+paste("Table of injury location")
+table(tibble_data$Injury)
+
+ggplot(tibble_data, aes(Injury)) + geom_bar() + labs(title="Anatomic location of injuries among Cowboys players - Week 18")
+```
+
+Illness was the most common reason for someone to be on the injury list. A total of 5 people had an illness, 4 had an ankle injury, 2 with a knee injury, 1 had a thigh injury, and 1 had a foot injury. Two people had multiple injuries.
