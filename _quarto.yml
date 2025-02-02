@@ -12,10 +12,10 @@ website:
         menu:
           - text: "Starter Analysis Exercise"
             file: starter-analysis-exercise/products/report/starter-analysis-report.qmd
+          - text: "CDC data exercise"
+            file: cdcdata-exercise/cdcdata-exercise.qmd
           - text: "Data exercise"
             file: data-exercise/data-exercise.qmd
-          - text: " CDC data exercise"
-            file: cdcdata-exercise/cdcdata-exercise.qmd
           - text: "R Coding Exercise"
             file: coding-exercise/coding-exercise.qmd
     right:
