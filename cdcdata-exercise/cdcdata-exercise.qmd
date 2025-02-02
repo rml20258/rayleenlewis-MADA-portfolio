@@ -1,0 +1,131 @@
+---
+title: "CDC Data Exercise"
+format: html
+---
+
+## Data description
+I'll be exploring COVID serologic data. This data set includes serologic results from a CDC assay as well as several commercial assays. The data can be found on the [CDC's data website](https://data.cdc.gov/Coronavirus-and-Other-Respiratory-Viruses/Examination-of-SARS-CoV-2-serological-test-results/hhvg-83jq/about_data). In addition to seroreactivity (yes/no) and titers, the dataset also includes information from PCR results, a marker for current COVID infection.
+
+#### Data import
+
+```{r, echo = FALSE, include = FALSE}
+library(tidyverse)
+library(naniar)
+library(procs)
+```
+First, I import the data and check the level of missingness for each variable.
+
+```{r}
+#Reading in the CSV
+covid <- read_csv("Examination_of_SARS-CoV-2_serological_test_results_from_multiple_commercial_and_laboratory_platforms_with_an_in-house_serum_panel_20250202.csv")
+
+#Getting an idea of what's in the data set
+str(covid)
+glimpse(covid)
+#Based on this summary, there don't seem to be any weird values
+summary(covid)
+#There are no missing values
+gg_miss_var(covid)
+```
+
+I also am choosing to restrict the dataset to variables with information on PCR status, the CDC in-house assay, and the commercial assay from Abbott. There are also variables for both the titer and the log 10 of the titer. Since this information is redundant, I only kept the log transformed variables as these more closely resemble a normal distribution.
+```{r}
+#Restricting data to variables PCR status, the CDC in-house assay, and the commercial assay from Abbott
+covid_mini <- covid %>%
+  select(c('PCR confirmed','Abbott Reactivity','In-House CDC ELISA Reactivity','Abbott S/C Values (Log10)', 'In-House CDC ELISA S/T Values (Log10)'))
+
+#Confirming reduction
+str(covid_mini)
+```
+
+
+
+## Exploratory tables - categorical variables
+
+Next, I chose to look at the categorical variables in the dataset: PCR status, Abbott Reactivity, In-House CDC ELISA Reactivity. These tables show the total sample size (N), count (CNT), and percent (PCT) of each category. I also did a crosstab of each of the categorical variables with each other.
+
+```{r}
+# Frequency of PCR status
+proc_freq(data = covid_mini, tables = `PCR confirmed`)
+
+# Frequency of Abbott Reactivity
+proc_freq(data = covid_mini, tables = `Abbott Reactivity`)
+
+# Frequency of In-House CDC ELISA Reactivity
+proc_freq(data = covid_mini, tables = `In-House CDC ELISA Reactivity`)
+
+#The proc means function was struggling with the names of the variables, so I created new variables for each of the categorical variables with shorter names
+renames <- covid_mini %>%
+  mutate(pcr = `PCR confirmed`) %>%
+  mutate(cdc = `In-House CDC ELISA Reactivity`) %>%
+  mutate(abbott = `Abbott Reactivity`)
+
+#Cross tab of each of the categorical variables
+proc_freq(data = renames, tables = v(pcr * cdc, pcr * abbott, cdc * abbott))
+
+```
+
+## Exploratory anaylses - continuous variables
+Next, I looked at the distribution of the continous variables: Abbott S/C Values (Log10), In-House CDC ELISA S/T Values (Log10).
+
+For each variable, I created a table that includes the sample size, mean, standard deviation, min, and max and a histogram of the values. Because there appeared to be a bimodal distribution, I performed these steps by seroreactivity status for the relevant assay. I also assessed the distribution of each log titer (from Abbott and CDC) by PCR status.
+
+```{r}
+#Producing a table showing the sample size, mean, standard deviation, min, and max for each continuous variable
+#Also creating a figure of each variable
+
+#Overall stats - Abbott
+proc_means(data = covid_mini, `Abbott S/C Values (Log10)`)
+
+#Stats by seroreactivity status - Abbott
+proc_means(data = covid_mini, `Abbott S/C Values (Log10)`, by = `Abbott Reactivity`)
+
+ggplot(covid_mini, aes(x = `Abbott S/C Values (Log10)`, fill = `Abbott Reactivity`, color = `Abbott Reactivity`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Non-reactive" = "maroon", "Reactive" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+
+
+#Overall stats - CDC
+proc_means(data = covid_mini, `In-House CDC ELISA S/T Values (Log10)`)
+
+#Stats by seroreactivity status - CDC
+proc_means(data = covid_mini, `In-House CDC ELISA S/T Values (Log10)`, by = `In-House CDC ELISA Reactivity`)
+
+ggplot(covid_mini, aes(x = `In-House CDC ELISA S/T Values (Log10)`, fill = `In-House CDC ELISA Reactivity`, color = `In-House CDC ELISA Reactivity`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Non-reactive" = "maroon", "Reactive" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+
+#Distribution of log titers by PCR status
+#Abbott
+#Stats by seroreactivity status - Abbott
+proc_means(data = covid_mini, `Abbott S/C Values (Log10)`, by = `PCR confirmed`)
+
+ggplot(covid_mini, aes(x = `Abbott S/C Values (Log10)`, fill = `PCR confirmed`, color = `PCR confirmed`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Neg" = "maroon", "Pos" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+#CDC
+proc_means(data = covid_mini, `In-House CDC ELISA S/T Values (Log10)`, by = `PCR confirmed`)
+
+ggplot(covid_mini, aes(x = `In-House CDC ELISA S/T Values (Log10)`, fill = `PCR confirmed`, color = `PCR confirmed`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Neg" = "maroon", "Pos" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+
+          
+```
+
