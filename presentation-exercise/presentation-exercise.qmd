@@ -10,7 +10,7 @@ library(gtExtras)
 library(dplyr)
 library(gtsummary)
 library(vtable)
-#library(magrittr)
+library(quarto)
 ```
 
 ## This page is all about data presentation!
@@ -180,7 +180,7 @@ To work towards the final table, I itteratively worked with ChatGPT to "build" t
 Using a data frame with two variables, Y (continuous) and league (4 level factor), write R code to create a table showing the mean (standard deviation), median (q1, q3), min, and max with p-values testing the difference in means and medians across the four groups.
 
 From here, I used prompts to implement one feature at a time. First, I focused on getting p-values. ChaptGPT provided an example of how to do this, but the p-values were at the bottom of the table, which I didn't love, so I wrote new code to append the p-values as a column instead. Next, I focused on the footnotes. ChatGPT wrote code to add a footnote for the comparison of means testing. I used this to write my own footnote for the medians column. Next, I worked on adding histograms for each of the rows. Once I worked out this code, I wanted to take it a step further and color the histograms to match the colors from the figure above. Next, I added the descriptive footnote. I based this code off of the original error-riddled code provided from the gt exploration prompt. And, finally, I wanted to add some conditional coding. I decided to identify the lowest minimum attendance and color the cell light gray and set the font to black. ChatGPT helped with this code. I wrote my own code to similarly identify the highest maximum value in the max column and color the cell light blue and set the font to blue. The text below the table was modified to include notes on the coloring.
-```{r}
+```{r, results='asis'}
 #Creating a variable for league based on the x values
 data <- data %>%
   mutate(league = ifelse(x < 1, "NFL", 
