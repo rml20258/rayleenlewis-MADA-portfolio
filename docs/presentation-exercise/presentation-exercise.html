@@ -365,6 +365,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>I’ve never created a table in R, so I decided to take some of the advice provided in the Discussion posts about the use of AI and ask ChatGPT to “give me code to explore the features of the gt package in R to make tables.” Because I had previously used this window for helping with my chart above, it used some of the aspects from the data in its example code (e.g., men’s sports leagues), but it didn’t have any context for what the data represented, so it made up a fake dataset. The code itself threw several errors, so I used this to see what some of the basic functionality of some of the buzzwords (e.g., cols_label, tab_style).</p>
 <p>To work towards the final table, I itteratively worked with ChatGPT to “build” the table and features. My first prompt was to get the results I wanted int he table: Using a data frame with two variables, Y (continuous) and league (4 level factor), write R code to create a table showing the mean (standard deviation), median (q1, q3), min, and max with p-values testing the difference in means and medians across the four groups.</p>
 <p>From here, I used prompts to implement one feature at a time. First, I focused on getting p-values. ChaptGPT provided an example of how to do this, but the p-values were at the bottom of the table, which I didn’t love, so I wrote new code to append the p-values as a column instead. Next, I focused on the footnotes. ChatGPT wrote code to add a footnote for the comparison of means testing. I used this to write my own footnote for the medians column. Next, I worked on adding histograms for each of the rows. Once I worked out this code, I wanted to take it a step further and color the histograms to match the colors from the figure above. Next, I added the descriptive footnote. I based this code off of the original error-riddled code provided from the gt exploration prompt. And, finally, I wanted to add some conditional coding. I decided to identify the lowest minimum attendance and color the cell light gray and set the font to black. ChatGPT helped with this code. I wrote my own code to similarly identify the highest maximum value in the max column and color the cell light blue and set the font to blue. The text below the table was modified to include notes on the coloring.</p>
+<<<<<<< HEAD
+=======
+<div class="cell">
+>>>>>>> origin/main
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Creating a variable for league based on the x values</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">league =</span> <span class="fu">ifelse</span>(x <span class="sc">&lt;</span> <span class="dv">1</span>, <span class="st">"NFL"</span>, </span>
@@ -517,6 +521,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_source_note</span>(</span>
 <span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a>    <span class="at">source_note =</span> <span class="fu">md</span>(<span class="st">"**Table 1 caption:** Table presents basic summary statistics (i.e., mean, median, min, and max) home game attendance by league, demonstrating that there are substantial differences in game attendence by sport, with attendance being highest for NFL games and lowest for NHL games."</span>)</span>
 <span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<<<<<<< HEAD
 <pre><code>Warning: Since gt v0.6.0 `fmt_missing()` is deprecated and will soon be removed.
 ℹ Use `sub_missing()` instead.
 This warning is displayed once every 8 hours.</code></pre>
@@ -524,21 +529,45 @@ This warning is displayed once every 8 hours.</code></pre>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>gt_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div id="odbyaugopr" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>#odbyaugopr table {
+=======
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Since gt v0.6.0 `fmt_missing()` is deprecated and will soon be removed.
+ℹ Use `sub_missing()` instead.
+This warning is displayed once every 8 hours.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print table</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>gt_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div id="kxamsyjeqw" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#kxamsyjeqw table {
+>>>>>>> origin/main
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+<<<<<<< HEAD
 #odbyaugopr thead, #odbyaugopr tbody, #odbyaugopr tfoot, #odbyaugopr tr, #odbyaugopr td, #odbyaugopr th {
   border-style: none;
 }
 
 #odbyaugopr p {
+=======
+#kxamsyjeqw thead, #kxamsyjeqw tbody, #kxamsyjeqw tfoot, #kxamsyjeqw tr, #kxamsyjeqw td, #kxamsyjeqw th {
+  border-style: none;
+}
+
+#kxamsyjeqw p {
+>>>>>>> origin/main
   margin: 0;
   padding: 0;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_table {
+=======
+#kxamsyjeqw .gt_table {
+>>>>>>> origin/main
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -564,12 +593,20 @@ This warning is displayed once every 8 hours.</code></pre>
   border-left-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_caption {
+=======
+#kxamsyjeqw .gt_caption {
+>>>>>>> origin/main
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_title {
+=======
+#kxamsyjeqw .gt_title {
+>>>>>>> origin/main
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -581,7 +618,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-bottom-width: 0;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_subtitle {
+=======
+#kxamsyjeqw .gt_subtitle {
+>>>>>>> origin/main
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -593,7 +634,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-top-width: 0;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_heading {
+=======
+#kxamsyjeqw .gt_heading {
+>>>>>>> origin/main
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -605,13 +650,21 @@ This warning is displayed once every 8 hours.</code></pre>
   border-right-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_bottom_border {
+=======
+#kxamsyjeqw .gt_bottom_border {
+>>>>>>> origin/main
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_col_headings {
+=======
+#kxamsyjeqw .gt_col_headings {
+>>>>>>> origin/main
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -626,7 +679,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-right-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_col_heading {
+=======
+#kxamsyjeqw .gt_col_heading {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -646,7 +703,11 @@ This warning is displayed once every 8 hours.</code></pre>
   overflow-x: hidden;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_column_spanner_outer {
+=======
+#kxamsyjeqw .gt_column_spanner_outer {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -658,6 +719,7 @@ This warning is displayed once every 8 hours.</code></pre>
   padding-right: 4px;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
@@ -667,6 +729,17 @@ This warning is displayed once every 8 hours.</code></pre>
 }
 
 #odbyaugopr .gt_column_spanner {
+=======
+#kxamsyjeqw .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#kxamsyjeqw .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#kxamsyjeqw .gt_column_spanner {
+>>>>>>> origin/main
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -678,11 +751,19 @@ This warning is displayed once every 8 hours.</code></pre>
   width: 100%;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
 #odbyaugopr .gt_group_heading {
+=======
+#kxamsyjeqw .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#kxamsyjeqw .gt_group_heading {
+>>>>>>> origin/main
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -708,7 +789,11 @@ This warning is displayed once every 8 hours.</code></pre>
   text-align: left;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_empty_group_heading {
+=======
+#kxamsyjeqw .gt_empty_group_heading {
+>>>>>>> origin/main
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -723,6 +808,7 @@ This warning is displayed once every 8 hours.</code></pre>
   vertical-align: middle;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_from_md > :first-child {
   margin-top: 0;
 }
@@ -732,6 +818,17 @@ This warning is displayed once every 8 hours.</code></pre>
 }
 
 #odbyaugopr .gt_row {
+=======
+#kxamsyjeqw .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#kxamsyjeqw .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#kxamsyjeqw .gt_row {
+>>>>>>> origin/main
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -750,7 +847,11 @@ This warning is displayed once every 8 hours.</code></pre>
   overflow-x: hidden;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_stub {
+=======
+#kxamsyjeqw .gt_stub {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -763,7 +864,11 @@ This warning is displayed once every 8 hours.</code></pre>
   padding-right: 5px;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_stub_row_group {
+=======
+#kxamsyjeqw .gt_stub_row_group {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -777,6 +882,7 @@ This warning is displayed once every 8 hours.</code></pre>
   vertical-align: top;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_row_group_first td {
   border-top-width: 2px;
 }
@@ -786,6 +892,17 @@ This warning is displayed once every 8 hours.</code></pre>
 }
 
 #odbyaugopr .gt_summary_row {
+=======
+#kxamsyjeqw .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#kxamsyjeqw .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#kxamsyjeqw .gt_summary_row {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -795,16 +912,28 @@ This warning is displayed once every 8 hours.</code></pre>
   padding-right: 5px;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_first_summary_row {
+=======
+#kxamsyjeqw .gt_first_summary_row {
+>>>>>>> origin/main
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
 #odbyaugopr .gt_last_summary_row {
+=======
+#kxamsyjeqw .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#kxamsyjeqw .gt_last_summary_row {
+>>>>>>> origin/main
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -814,7 +943,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_grand_summary_row {
+=======
+#kxamsyjeqw .gt_grand_summary_row {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -824,7 +957,11 @@ This warning is displayed once every 8 hours.</code></pre>
   padding-right: 5px;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_first_grand_summary_row {
+=======
+#kxamsyjeqw .gt_first_grand_summary_row {
+>>>>>>> origin/main
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -834,7 +971,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-top-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_last_grand_summary_row_top {
+=======
+#kxamsyjeqw .gt_last_grand_summary_row_top {
+>>>>>>> origin/main
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -844,11 +985,19 @@ This warning is displayed once every 8 hours.</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
 #odbyaugopr .gt_table_body {
+=======
+#kxamsyjeqw .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#kxamsyjeqw .gt_table_body {
+>>>>>>> origin/main
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -857,7 +1006,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_footnotes {
+=======
+#kxamsyjeqw .gt_footnotes {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -871,7 +1024,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-right-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_footnote {
+=======
+#kxamsyjeqw .gt_footnote {
+>>>>>>> origin/main
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -880,7 +1037,11 @@ This warning is displayed once every 8 hours.</code></pre>
   padding-right: 5px;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_sourcenotes {
+=======
+#kxamsyjeqw .gt_sourcenotes {
+>>>>>>> origin/main
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -894,7 +1055,11 @@ This warning is displayed once every 8 hours.</code></pre>
   border-right-color: #D3D3D3;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_sourcenote {
+=======
+#kxamsyjeqw .gt_sourcenote {
+>>>>>>> origin/main
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -902,6 +1067,7 @@ This warning is displayed once every 8 hours.</code></pre>
   padding-right: 5px;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_left {
   text-align: left;
 }
@@ -911,10 +1077,22 @@ This warning is displayed once every 8 hours.</code></pre>
 }
 
 #odbyaugopr .gt_right {
+=======
+#kxamsyjeqw .gt_left {
+  text-align: left;
+}
+
+#kxamsyjeqw .gt_center {
+  text-align: center;
+}
+
+#kxamsyjeqw .gt_right {
+>>>>>>> origin/main
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_font_normal {
   font-weight: normal;
 }
@@ -932,16 +1110,40 @@ This warning is displayed once every 8 hours.</code></pre>
 }
 
 #odbyaugopr .gt_footnote_marks {
+=======
+#kxamsyjeqw .gt_font_normal {
+  font-weight: normal;
+}
+
+#kxamsyjeqw .gt_font_bold {
+  font-weight: bold;
+}
+
+#kxamsyjeqw .gt_font_italic {
+  font-style: italic;
+}
+
+#kxamsyjeqw .gt_super {
+  font-size: 65%;
+}
+
+#kxamsyjeqw .gt_footnote_marks {
+>>>>>>> origin/main
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_asterisk {
+=======
+#kxamsyjeqw .gt_asterisk {
+>>>>>>> origin/main
   font-size: 100%;
   vertical-align: 0;
 }
 
+<<<<<<< HEAD
 #odbyaugopr .gt_indent_1 {
   text-indent: 5px;
 }
@@ -963,11 +1165,38 @@ This warning is displayed once every 8 hours.</code></pre>
 }
 
 #odbyaugopr .katex-display {
+=======
+#kxamsyjeqw .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#kxamsyjeqw .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#kxamsyjeqw .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#kxamsyjeqw .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#kxamsyjeqw .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#kxamsyjeqw .katex-display {
+>>>>>>> origin/main
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
+<<<<<<< HEAD
 #odbyaugopr div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+=======
+#kxamsyjeqw div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+>>>>>>> origin/main
   height: 0px !important;
 }
 </style>
@@ -1047,6 +1276,11 @@ This warning is displayed once every 8 hours.</code></pre>
   </tfoot>
 </table>
 </div>
+<<<<<<< HEAD
+=======
+</div>
+</div>
+>>>>>>> origin/main
 
 
 </section>
