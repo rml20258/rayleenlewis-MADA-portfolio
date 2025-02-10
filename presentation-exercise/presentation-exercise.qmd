@@ -342,4 +342,4 @@ gt_table
 
 ```
 
-
+### Success, figure has been recreated and table has been produced!
