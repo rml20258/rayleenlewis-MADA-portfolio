@@ -129,3 +129,274 @@ ggplot(covid_mini, aes(x = `In-House CDC ELISA S/T Values (Log10)`, fill = `PCR 
           
 ```
 
+# Part Two: Generating Synthetic Data
+
+This section was contributed by Natalie Cann. 
+
+## Loading Packages 
+
+I will first load packages that will be of use in this exercise. 
+```{r}
+# Load packages
+library(dplyr)
+library(purrr)
+library(ggplot2)
+library(here)
+```
+
+## Assessing Correlations from the Original Dataset
+
+I will create a correlation matrix to visualize the relationships between the variables in the original dataset. 
+```{r}
+# Using numerical values for the categorical variables
+covid_numeric <- covid_mini %>%
+  mutate(
+    pcr = ifelse(`PCR confirmed` == "Pos", 1, 0),
+    abbott = ifelse(`Abbott Reactivity` == "Reactive", 1, 0),
+    cdc = ifelse(`In-House CDC ELISA Reactivity` == "Reactive", 1, 0)
+  ) %>%
+  select(pcr, abbott, cdc)
+
+# Compute correlation matrix
+cor_matrix <- cor(covid_numeric, method = "pearson")  
+print(cor_matrix)
+
+# Visualize correlation matrix
+library(corrplot)
+corrplot(cor_matrix, method = "color", col = colorRampPalette(c("red", "white", "blue"))(200),
+         addCoef.col = "black", tl.col = "black", tl.cex = 1, number.cex = 1)
+``` 
+The correlation matrix above displays very strong associations between the variables. The correlations between pcr and pcr, abbott and abbott, as well as cdc and cdc are all 1. This is expected as there should be a 100% match when a variable is compared to itself. The correlation between pcr and abbott is 0.95; the correlation between pcr and cdc is 0.95; the correlation between abbot and cdc is 0.96. These high correlation coefficients suggest that the variables are highly associated with each other. I aim to ensure that the correlations between these variables are similar within the synthetic dataset. 
+
+## Summary Statistics
+
+I will run a summary line and count lines to obtain information on means and standards that will help me to create the synthetic dataset. 
+```{r}
+summary(covid_mini)
+
+mean(covid_mini$`Abbott S/C Values (Log10)`)
+sd(covid_mini$`Abbott S/C Values (Log10)`)
+
+mean(covid_mini$`In-House CDC ELISA S/T Values (Log10)`)
+sd(covid_mini$`In-House CDC ELISA S/T Values (Log10)`)  # Fixed closing parenthesis
+
+covid_mini %>% filter(`PCR confirmed` == "Pos") %>% count()
+covid_mini %>% filter(`Abbott Reactivity` == "Reactive") %>% count()
+covid_mini %>% filter(`In-House CDC ELISA Reactivity` == "Reactive") %>% count()
+```
+
+I will now calculate the mean and standard deviation of the log-transformed variables. I will calculate the mean and standard deviation for both the reactive and non-reactive groups. 
+```{r}
+mean(covid_mini$`Abbott S/C Values (Log10)`)
+mean(covid_mini$`Abbott S/C Values (Log10)` == "Reactive")
+mean(covid_mini$`Abbott S/C Values (Log10)` == "Non-reactive")
+sd(covid_mini$`Abbott S/C Values (Log10)`)
+mean(covid_mini$`In-House CDC ELISA S/T Values (Log10)`)
+mean(covid_mini$`In-House CDC ELISA S/T Values (Log10)` == "Reactive")
+mean(covid_mini$`In-House CDC ELISA S/T Values (Log10)` == "Non-reactive")
+sd(covid_mini$`In-House CDC ELISA S/T Values (Log10)`)
+```
+
+I will now calculate the mean and standard deviation of Abott S/C Values (Log10) for when abbott reactivity is equal to reactive and then non-reactive.
+```{r}
+# Mean of Abbott S/C Values (Log10) for "Reactive" Abbott Reactivity
+mean_reactive_abbott <- mean(covid_mini$`Abbott S/C Values (Log10)`[covid_mini$`Abbott Reactivity` == "Reactive"])
+
+# Mean of Abbott S/C Values (Log10) for "Non-reactive" Abbott Reactivity
+mean_non_reactive_abbott <- mean(covid_mini$`Abbott S/C Values (Log10)`[covid_mini$`Abbott Reactivity` == "Non-reactive"])
+
+# Output the results
+mean_reactive_abbott
+mean_non_reactive_abbott
+
+# sd of Abbott S/C Values (Log10) for "Reactive" Abbott Reactivity
+sd_reactive_abbott <- sd(covid_mini$`Abbott S/C Values (Log10)`[covid_mini$`Abbott Reactivity` == "Reactive"])
+
+# sd of Abbott S/C Values (Log10) for "Non-reactive" Abbott Reactivity
+sd_non_reactive_abbott <- sd(covid_mini$`Abbott S/C Values (Log10)`[covid_mini$`Abbott Reactivity` == "Non-reactive"])
+
+# Output the results
+sd_reactive_abbott
+sd_non_reactive_abbott
+```
+I will now calculate the mean and standard deviation of In-House CDC ELISA S/T Values (Log10) for when In-House CDC ELISA Reactivity is equal to reactive and then non-reactive.
+```{r}
+# Mean of In-House CDC ELISA S/T Values (Log10) for "Reactive" In-House CDC ELISA Reactivity
+mean_reactive_cdc <- mean(covid_mini$`In-House CDC ELISA S/T Values (Log10)`[covid_mini$`In-House CDC ELISA Reactivity` == "Reactive"])
+
+# Mean of In-House CDC ELISA S/T Values (Log10) for "Non-reactive" In-House CDC ELISA Reactivity
+mean_non_reactive_cdc <- mean(covid_mini$`In-House CDC ELISA S/T Values (Log10)`[covid_mini$`In-House CDC ELISA Reactivity` == "Non-reactive"])
+
+# Output the results
+mean_reactive_cdc
+mean_non_reactive_cdc
+
+# sd of In-House CDC ELISA S/T Values (Log10) for "Reactive" In-House CDC ELISA Reactivity
+sd_reactive_cdc <- sd(covid_mini$`In-House CDC ELISA S/T Values (Log10)`[covid_mini$`In-House CDC ELISA Reactivity` == "Reactive"])
+
+# sd of In-House CDC ELISA S/T Values (Log10) for "Non-reactive" In-House CDC ELISA Reactivity
+sd_non_reactive_cdc <- sd(covid_mini$`In-House CDC ELISA S/T Values (Log10)`[covid_mini$`In-House CDC ELISA Reactivity` == "Non-reactive"])
+
+# Output the results
+sd_reactive_cdc
+sd_non_reactive_cdc
+``` 
+## Generating Synthetic Dataset
+
+Next, I will set a seed for reproducibility and specify 204 as the number of observations. 
+```{r}
+# Setting seed for reproducibility
+set.seed(123) 
+# Define number of observations 
+n_obs <- 204 # same as original dataset
+```
+
+I will now create the synthetic dataset. I will use the notes I took from Module 4B: Synthetic Data to help with this. Throughout the process of creating this dataset, I ran into a few errors which I sent through ChatGPT to obtain help. 
+```{r}
+# Creation of empty data frame with placeholders for variables
+covid_synthetic <- data.frame(
+  pcr = character(n_obs), 
+  abbott = character(n_obs),
+  cdc = character(n_obs),
+  Abbott_S_C_Values_Log10 = numeric(n_obs),
+  In_House_CDC_ELISA_S_T_Values_Log10 = numeric(n_obs)
+)
+
+# Variable 1: pcr
+covid_synthetic$pcr <- sample(c("Pos", "Neg"), n_obs, replace = TRUE, prob = c(0.43, 0.57)) # probabilities created from counts line above (87/204 pos; 117/204 neg)
+
+# Variable 2: abbott
+covid_synthetic$abbott <- sample(c("Reactive", "Non-reactive"), n_obs, replace = TRUE, prob = c(0.41, 0.59)) # probabilities created from counts line above (84/204 reactive; 120/204 non-reactive)
+
+# Variable 3: cdc
+covid_synthetic$cdc <- sample(c("Reactive", "Non-reactive"), n_obs, replace = TRUE, prob = c(0.42, 0.58)) # probabilities created from counts line above (86/204 reactive; 118/204 non-reactive)
+
+# Variable 4: Abbott_S_C_Values_Log10
+covid_synthetic$Abbott_S_C_Values_Log10 <- unlist(sapply(covid_synthetic$abbott, function(reactivity) {
+  if (reactivity == "Reactive") {
+    rnorm(1, mean = 0.6649786, sd = 0.1746322) # Mean and sd for Reactive (calculated above)
+  } else {
+    rnorm(1, mean = -0.7746825, sd = 0.3248742) # Mean and sd for Non-reactive (calculated above)
+  }
+}))
+
+## ChatGPT Prompt: # Variable 4: Abbott_S_C_Values_Log10   covid_synthetic$Abbott_S_C_Values_Log10 <- rnorm(n_obs, mean = -0.1818809, sd = 0.76081) # mean (-0.1818809) and sd (0.76081) based on original data --- fix this so it shows the mean for reactive (0.6649786) and non-reactive (-0.7746825)
+## Error in $<-.data.frame(*tmp*, Abbott_S_C_Values_Log10, value = list()) : replacement has 0 rows, data has 204. Please help fix this.
+### I used information from the output of this prompt to fix Variable 5 as well. 
+
+# Variable 5: In_House_CDC_ELISA_S_T_Values_Log10
+covid_synthetic$In_House_CDC_ELISA_S_T_Values_Log10 <- unlist(sapply(covid_synthetic$cdc, function(reactivity) {
+  if (reactivity == "Reactive") {
+    rnorm(1, mean = 0.4762291, sd = 0.1244573) # Mean and sd for Reactive (calculated above)
+  } else {
+    rnorm(1, mean = -0.7327059, sd = 0.3102606) # Mean and sd for Non-reactive (calculated above)
+  }
+}))
+```
+
+## Assessing Correlations from the Synthetic Dataset
+
+I will create a correlation matrix to visualize the relationships between the variables in the original dataset. 
+```{r}
+# Using numerical values for the categorical variables
+covid_numeric_synthetic <- covid_synthetic %>%
+  mutate(
+    pcr = ifelse(`pcr` == "Pos", 1, 0),
+    abbott = ifelse(`abbott` == "Reactive", 1, 0),
+    cdc = ifelse(`cdc` == "Reactive", 1, 0)
+  ) %>%
+  select(pcr, abbott, cdc)
+
+# Compute correlation matrix
+cor_matrix_synthetic <- cor(covid_numeric, method = "pearson")  
+print(cor_matrix_synthetic)
+
+# Visualize correlation matrix
+library(corrplot)
+corrplot(cor_matrix_synthetic, method = "color", col = colorRampPalette(c("red", "white", "blue"))(200),
+         addCoef.col = "black", tl.col = "black", tl.cex = 1, number.cex = 1)
+``` 
+The correlation matrix above shows that the correlation coefficients dervied from the synthetic dataset variables appear to be identical to those of the original dataset. This suggests that the synthetic dataset is a good representation of the original dataset.
+
+## Exploratory tables - categorical variables
+
+Now, I will use Rayleen's code to explore the synthetic dataset's categorical variables.  
+```{r}
+# Frequency of PCR status
+proc_freq(data = covid_synthetic, tables = `pcr`)
+
+# Frequency of Abbott Reactivity
+proc_freq(data = covid_synthetic, tables = `abbott`)
+
+# Frequency of In-House CDC ELISA Reactivity
+proc_freq(data = covid_synthetic, tables = `cdc`)
+
+#Cross tab of each of the categorical variables
+proc_freq(data = renames, tables = v(pcr * cdc, pcr * abbott, cdc * abbott))
+
+```
+
+## Exploratory anaylses - continuous variables
+
+Now, I will use Rayleen's code to explore the synthetic dataset's continuous variables.  
+```{r}
+#Producing a table showing the sample size, mean, standard deviation, min, and max for each continuous variable
+#Also creating a figure of each variable
+
+#Overall stats - Abbott
+proc_means(data = covid_synthetic, `Abbott_S_C_Values_Log10`)
+
+#Stats by seroreactivity status - Abbott
+proc_means(data = covid_synthetic, `Abbott_S_C_Values_Log10`, by = `abbott`)
+
+ggplot(covid_synthetic, aes(x = `Abbott_S_C_Values_Log10`, fill = `abbott`, color = `abbott`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Non-reactive" = "maroon", "Reactive" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+
+
+#Overall stats - CDC
+proc_means(data = covid_synthetic, `In_House_CDC_ELISA_S_T_Values_Log10`)
+
+#Stats by seroreactivity status - CDC
+proc_means(data = covid_synthetic, `In_House_CDC_ELISA_S_T_Values_Log10`, by = `cdc`)
+
+ggplot(covid_synthetic, aes(x = `In_House_CDC_ELISA_S_T_Values_Log10`, fill = `cdc`, color = `cdc`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Non-reactive" = "maroon", "Reactive" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+
+#Distribution of log titers by PCR status
+#Abbott
+#Stats by seroreactivity status - Abbott
+proc_means(data = covid_synthetic, `Abbott_S_C_Values_Log10`, by = `pcr`)
+
+ggplot(covid_synthetic, aes(x = `Abbott_S_C_Values_Log10`, fill = `pcr`, color = `pcr`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Neg" = "maroon", "Pos" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+#CDC
+proc_means(data = covid_synthetic, `In_House_CDC_ELISA_S_T_Values_Log10`, by = `pcr`)
+
+ggplot(covid_synthetic, aes(x = `In_House_CDC_ELISA_S_T_Values_Log10`, fill = `pcr`, color = `pcr`)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("Neg" = "maroon", "Pos" = "black")) +
+  labs(title = "Histogram with Kernel Density Overlay",
+       x = "Value",
+       y = "Density")
+          
+```
+
+## Comparison of the Original and Synthetic datasets
+
+I will now compare the original and synthetic datasets. I ran the same exploratory analyses that Rayleen did for optimal comparison of the two datasets. The exploratory tables for the categorical variables are similar between the datasets. The counts and PCTs between each table from the original and synthetic datasets are very similar. The exploratory analyses for the continuous variables are also similar. The first two graphs created from the synthetic dataset are similar to those from the original dataset. Their distribution is similar in that the reactive group has a higher mean value and is much more steep than the non-reactive group. However, for the last two graphs, the distribution is different. The synthetic dataset graphs are bimodal and the reactive and non-reactive groups seem to overlap. There is minimal overlap present in the original graphs. The correlation matrices for the variables appear to be identical between the original and the synthetic datasets. 
