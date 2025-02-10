@@ -1,0 +1,345 @@
+---
+title: "Presenting Data and Results"
+format: html
+---
+
+```{r, echo=FALSE, include=FALSE}
+library(ggplot2)
+library(gt)
+library(gtExtras)
+library(dplyr)
+library(gtsummary)
+library(vtable)
+#library(magrittr)
+```
+
+## This page is all about data presentation!
+
+The staff at 538 of ABC News included a graphic showing the average regular-season home game attendance for all teams in the Big Four North American men's professional sports leagues. This was part of their [25 coolest charts we made in 2023](https://abcnews.go.com/538/25-coolest-charts-made-2023/story?id=105358742) list and was included in the article titled, "[How Massive The NFL Really Is, In 4 Charts](https://fivethirtyeight.com/features/how-massive-the-nfl-really-is-in-4-charts/)" by Ryan Best.
+
+![](nfl-dominance-538-cb-231219_1703006732983_hpEmbed_4x9.avif){fig-align="center" width="200"}
+
+The data for this plot was not readily accessible, so I extracted the data using a free online [plot digitizer](https://plotdigitizer.com/app).
+
+### Figure recreation
+
+My goal was to recreate this figure using a combination of AI generated code (using ChatGPT) and my own personal tweaks.
+
+As a very first step, I wanted to see what ChatGPT would give me if I only gave it the data and figure. Using the following prompt, I got a very basic plot that at least got the data points right: Using the attached data, write r code to create a plot that resembles the attached avif file
+
+```{r}
+#ChatGPT from first prompt of only data and figure
+# Load the data
+data <- read.csv("capacity_plot_data.csv")
+
+# Clean column names
+colnames(data) <- trimws(colnames(data))
+
+# Create the plot
+ggplot(data, aes(x = x, y = y)) +
+  geom_point(color = "red", alpha = 0.7) +
+  labs(title = "Capacity Plot", x = "X Axis", y = "Y Axis") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(face = "bold"),
+    panel.grid.major = element_line(color = "grey80"),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+My second prompt was tailored specifically to try to get as close to the figure as possible. The prompt was:
+
+Update the code to do the following:
+
+1.  Remove numbers on x-axis and add the following labels "NFL" at x = 1, "MLB" at x = 2, "NBA" at x = 3, and "NHL" at x = 4.
+2.  remove main title and axes titles.
+3.  Use filled circles as the markers.
+4.  For points with x-values \< 1, set color to orange. For points with x values between 1 and 1.5, set color to purple. For points with an x value between 2 and 3, set color to yellow. For points with an x value between 3.5 and 5, set color to green.
+5.  Graph and label averages for each cluster of points.
+
+This produced code with an error or two. I tried to get ChatGPT to fix the error (related to missing a color specification), but the solutions offered didn't fix the issue, so I fixed it myself (had to add a color to the last geom_text line). The figure below is created using ChatGPT's solution with some slight modifications by me for trouble shooting.
+
+```{r}
+# Load the data
+data <- read.csv("capacity_plot_data.csv")
+
+# Clean column names
+colnames(data) <- trimws(colnames(data))
+
+# Define colors based on x value ranges
+data$color <- with(data, ifelse(data$x < 1, "orange", 
+                          ifelse(data$x >= 1 & data$x < 1.5, "purple", 
+                          ifelse(data$x >= 2 & data$x < 3, "yellow", 
+                          ifelse(data$x >= 3.5 & data$x < 5, "green", "black")))))
+
+# Define x-axis labels
+x_labels <- c("1" = "NFL", "2" = "MLB", "3" = "NBA", "4" = "NHL")
+
+# Compute means for each cluster
+means <- aggregate(y ~ cut(x, breaks = c(-Inf, 1, 1.5, 3, 5, Inf)), data, mean)
+names(means) <- c("x_group", "y_mean")
+means$x <- c(0.5, 1.25, 2.5, 4)  # Approximate midpoints for clusters
+
+# Create the plot
+ggplot(data, aes(x = x, y = y, color = color)) +
+  geom_point(shape = 16, size = 3) +  # Use filled circles
+  scale_x_continuous(breaks = c(1, 2, 3, 4), labels = x_labels) +
+  scale_color_identity() +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.title = element_blank(),
+    axis.text.x = element_text(face = "bold"),
+    plot.title = element_blank(),
+    panel.grid.major = element_line(color = "grey80"),
+    panel.grid.minor = element_blank()
+  ) +
+  geom_point(data = means, aes(x = x, y = y_mean), color = "black", size = 4) +
+  geom_text(data = means, aes(x = x, y = y_mean, label = round(y_mean, 1)), color = "black", vjust = -1, fontface = "bold")
+
+
+```
+
+I went through several more iterations with ChatGPT to get the figure as close to the original as possible (so many that I hit the free plan limit for GPT-4o). I ended up tweaking may things myself, including creating league specific labels and locations for the labels, creating axes labels that matched the figure exactly rather than using the data as is (e.g., 90,000 was labeled as 90k), setting an aspect ratio more similar to the original figure, and even setting the figure title to have the same words on each line as the original. The final code and figure are below.
+
+```{r, warning=FALSE}
+# Load the data
+data <- read.csv("capacity_plot_data.csv")
+
+# Clean column names
+colnames(data) <- trimws(colnames(data))
+
+# Define colors based on x value ranges
+data$color <- with(data, ifelse(data$x < 1, "darkorange", 
+                          ifelse(data$x >= 1 & data$x < 1.5, "purple", 
+                          ifelse(data$x >= 2 & data$x < 3, "gold", 
+                          ifelse(data$x >= 3.5 & data$x < 4.5, "green", "black")))))
+
+# Define x-axis labels
+x_labels <- c("0.5" = "NFL", "1.1" = "MLB", "2.5" = "NBA", "4" = "NHL")
+y_labels <- c("0" = "0", "10000" = "10","20000" = "20","30000" = "30","40000" = "40","50000" = "50","60000" = "60","70000" = "70","80000" = "80","90000" = "90k")
+
+# Compute means for each cluster
+means <- aggregate(y ~ cut(x, breaks = c(-Inf, 1, 1.5, 3, 4.5, Inf)), data, mean)
+names(means) <- c("x_group", "y_mean")
+means$xmin <- c(-Inf, 1, 1.5, 3)  # Start of clusters
+means$xmax <- c(1, 1.5, 3, 4.5)  # End of clusters
+means$x <- c(0.5, 1.1, 2.5, 4)  # Midpoints for text labels
+
+# Create the plot
+ggplot(data, aes(x = x, y = y, color = color)) +
+  geom_point(shape = 21, size = 3, stroke = 0.3, fill = data$color, color = "white") +  # Use filled circles with white border
+  #scale_x_continuous(breaks = c(0.5, 1.1, 2.5, 4), labels = x_labels) +
+  scale_y_continuous(breaks = seq(0, max(data$y, na.rm = TRUE), by = 10000), labels = y_labels) +
+  scale_color_identity() +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.title = element_blank(),
+    axis.text.x = element_blank(),
+    plot.title = element_text(hjust = 0, size = 10),
+    panel.grid.major.x = element_blank(),  # Remove vertical grid lines
+    panel.grid.major.y = element_line(color = "lightgray", size = 0.3),  # Thinner light gray horizontal grid lines
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line(color = "black")  # Reduce width # Show x-axis 
+  ) +
+  geom_segment(data = means, aes(x = x-0.15, xend = x+0.15, y = y_mean, yend = y_mean), linetype = "dashed", color = "black") +  # Extend dashed lines to cluster width
+#  geom_text(data = means, aes(x = x, y = y_mean, label = paste("AVG.", round(y_mean, 0))), color = "black", vjust = -4, fontface = "bold") +
+  
+  # Add custom labels for each cluster
+  #NFL label
+  geom_text(aes(x = 1, y = max(data[data$color=="darkorange",]$y) * 0.8, label = "NFL", color = "darkorange"), fontface = "bold", size = 3) +
+  geom_text(data = means[means$x==0.5,], aes(x = 1, y = y_mean, label = paste("AVG.\n", round(y_mean, 0))), color = "black", size = 2) + #NFL Mean label
+  
+  geom_text(aes(x = 0.65, y = max(data[data$color=="purple",]$y) * 0.65,  label = "MLB", color = "purple"), fontface = "bold", size = 3) +
+  geom_text(data = means[means$x==1.1,], aes(x = 0.65, y = y_mean, label = paste("AVG.\n", round(y_mean, 0))), color = "black", size = 2) + #MLB Mean label
+  
+  geom_text(aes(x = 1.9, y = max(data[data$color=="gold",]$y) * 1.1,  label = "NBA", color = "gold"), fontface = "bold", size = 3) +
+  geom_text(data = means[means$x==2.5,], aes(x = 1.9, y = y_mean, label = paste("AVG.\n", round(y_mean, 0))), color = "black", size = 2) + #NBA Mean label
+  
+  geom_text(aes(x = 3.4, y = max(data[data$color=="green",]$y) * 1.1, label = "NHL", color = "green"), fontface = "bold", size = 3) +
+  geom_text(data = means[means$x==4,], aes(x = 3.4, y = y_mean, label = paste("AVG.\n", round(y_mean, 0))), color = "black", size = 2) + #NHL Mean label
+  coord_fixed(ratio = 0.00007) +
+  
+  ggtitle("Average regular-season home game \nattendance for all teams in the Big Four \nNorth American men's pro sports leagues")
+
+
+```
+
+For comparison, I'm showing the original figure. ![](nfl-dominance-538-cb-231219_1703006732983_hpEmbed_4x9.avif){fig-align="center" width="200"}
+
+As a note, because the exact data points were not available and had to be extracted from the image, there are small differences in the calculated averages between the two figures. The average capacity size differs by <400 between the original and recreated figures for NFL venues and <40 for the other leagues.
+
+Overall, the figures are very similar. The markers are similar colors with white borders, the labels for the league and "AVG. [mean]" are in ismilar places, means are noted with a dashed line for each league, y-axis labels are the exact same, the title is the same with the same words per line, the aspect ratio is similar, and the grid lines are similar. The created graph does not include the arrows and text going to the highest and lowest capacity venues or footnotes.
+
+### Table creation
+
+I've never created a table in R, so I decided to take some of the advice provided in the Discussion posts about the use of AI and ask ChatGPT to "give me code to explore the features of the gt package in R to make tables." Because I had previously used this window for helping with my chart above, it used some of the aspects from the data in its example code (e.g., men's sports leagues), but it didn't have any context for what the data represented, so it made up a fake dataset. The code itself threw several errors, so I used this to see what some of the basic functionality of some of the buzzwords (e.g., cols_label, tab_style). 
+
+To work towards the final table, I itteratively worked with ChatGPT to "build" the table and features. My first prompt was to get the results I wanted int he table:
+Using a data frame with two variables, Y (continuous) and league (4 level factor), write R code to create a table showing the mean (standard deviation), median (q1, q3), min, and max with p-values testing the difference in means and medians across the four groups.
+
+From here, I used prompts to implement one feature at a time. First, I focused on getting p-values. ChaptGPT provided an example of how to do this, but the p-values were at the bottom of the table, which I didn't love, so I wrote new code to append the p-values as a column instead. Next, I focused on the footnotes. ChatGPT wrote code to add a footnote for the comparison of means testing. I used this to write my own footnote for the medians column. Next, I worked on adding histograms for each of the rows. Once I worked out this code, I wanted to take it a step further and color the histograms to match the colors from the figure above. Next, I added the descriptive footnote. I based this code off of the original error-riddled code provided from the gt exploration prompt. And, finally, I wanted to add some conditional coding. I decided to identify the lowest minimum attendance and color the cell light gray and set the font to black. ChatGPT helped with this code. I wrote my own code to similarly identify the highest maximum value in the max column and color the cell light blue and set the font to blue. The text below the table was modified to include notes on the coloring.
+```{r}
+#Creating a variable for league based on the x values
+data <- data %>%
+  mutate(league = ifelse(x < 1, "NFL", 
+                          ifelse(x >= 1 & x < 1.5, "MLB", 
+                          ifelse(x >= 2 & x < 3, "NBA", 
+                          ifelse(x >= 3.5 & x < 5, "NHL", "error"))))) 
+#Restricting to the variables needed for data analysis
+data_t <- data %>%
+  select(league, y)
+
+
+# Compute summary statistics, all statistics were rescaled to the 1000s
+summary_stats <- data_t %>%
+  group_by(league) %>%
+  summarise(
+    `Mean (SD)` = paste0((round(mean(y), -1)/1000), " (", (round(sd(y), -1)/1000), ")"),
+    `Median (Q1, Q3)` = paste0((round(median(y), -1)/1000), " (", 
+                                (round(quantile(y, 0.25), -1)/1000), ", ", 
+                                (round(quantile(y, 0.75),-1)/1000), ")"),
+    Min = (round(min(y), -1)/1000),
+    Max = (round(max(y), -1)/1000),
+    .groups = "drop"
+  )
+
+
+# Compute p-values
+anova_p <- summary(aov(y ~ league, data = data_t))[[1]]["Pr(>F)"][1, 1] #comparison of means
+kw_p <- kruskal.test(y ~ league, data = data_t)$p.value #comparison of medians
+
+# Convert p-values to a formatted row
+p_values <- data.frame(
+  league = "p-value",
+  `Mean (SD)` = if_else(anova_p < 0.0001, "<0.0001", as.character(round(anova_p, 4))),
+  `Median (Q1, Q3)` = if_else(anova_p < 0.0001, "<0.0001", as.character(round(kw_p, 4))),
+  Min = NA,
+  Max = NA
+)
+
+#Created a dataset from the p-value information so p-values could be appended as columns rather than rows, also renamed columns
+p_values_mini <- p_values %>%
+  select(`Mean..SD.`, `Median..Q1..Q3.`) %>%
+  rename(p_value_mean = `Mean..SD.`, p_value_median = `Median..Q1..Q3.`) %>%
+  add_row(p_value_mean = c(rep("-", 3)), p_value_median = c(rep("-", 3)))
+# Combine statistics and p-values
+final_table <- bind_cols(summary_stats, p_values_mini)
+
+#Finding the max of the range of the x-axis to be used in each of the histograms so the histograms can have the same x-axis
+xlim_range <- range(data$y, na.rm = TRUE)
+
+#Creating distribution of attendance by league
+density_plots <- data %>%
+  group_by(league) %>%
+  group_split() %>%
+  purrr::map(~ {
+    p <- ggplot(.x, aes(x = y)) +
+      geom_density(fill = unique(.x$color), alpha = 0.5) +
+      xlim(xlim_range) + 
+      theme_minimal() +
+      labs(x = NULL, y = NULL) +
+      theme(axis.text = element_blank(), axis.ticks = element_blank())
+
+    # Save image and return filename
+    img_file <- paste0("density_", unique(.x$league), ".png")
+    ggsave(img_file, plot = p, width = 2, height = 1)
+    return(img_file)
+  })
+
+#Adding filenames of the histograms to the stats results
+final_table$density <- density_plots
+
+#Identifying the row where the minimum min is
+min_row <- which.min(final_table$Min)
+#Identifying the row where the maximum max is
+max_row <- which.max(final_table$Max)
+
+# Create a publication-ready table with gt
+
+gt_table <- final_table %>%
+  gt() %>%
+  #Setting table title
+  tab_header(
+    title = "Average regular season home game attendence, in thousands",
+    subtitle = "Comparison across Big Four men's sports leagues"
+  ) %>%
+  #Creating header that spans multiple columns
+  tab_spanner(
+    label = md("**Summary Statistics**"),
+    columns = c(`Mean (SD)`, `Median (Q1, Q3)`, Min, Max)
+  ) %>%
+  fmt_image(
+  columns = density,
+  rows = everything(),
+  height = NULL,
+  width = NULL,
+  sep = " ",
+  path = NULL,
+  file_pattern = "{x}",
+  encode = TRUE
+) %>%
+
+  cols_label(
+    league = "League",
+    `Mean (SD)` = "Mean (SD)",
+    `Median (Q1, Q3)` = "Median (Q1, Q3)",
+    Min = "Min",
+    Max = "Max",
+    p_value_mean = md("Comparison of means *P*-value"),
+    p_value_median = md("Comparison of medians *P*-value"),
+    density = "Distribution of attendance"
+    
+  ) %>%
+  # Apply style to the cell with the lowest value in the Min column
+  tab_style(
+    style = list(cell_fill(color = "lightgray"),
+    cell_text(color = "black")),
+    locations = cells_body(
+      rows = min_row,
+      columns = "Min"
+    )
+  )%>%
+  # Apply style to the cell with the highest value in the max column
+  tab_style(
+    style = list(cell_fill(color = "lightblue"),
+    cell_text(color = "blue")),
+    locations = cells_body(
+      rows = max_row,
+      columns = "Max"
+    )
+  )%>%
+    #Making all column headers bld
+    tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(everything()) 
+  )%>%
+    #Creating a footnote for the ANOVA p-value
+    tab_footnote(
+    footnote = md("*P*-value from ANOVA comparing mean attendance across the 4 leagues"),
+    locations = cells_column_labels(columns = p_value_mean)
+  ) %>%
+    #Creating a footnote for the Kruskal wallis p-value
+    tab_footnote(
+    footnote = md("*P*-value from Kruskal-Wallis test comparing median attendance across the 4 leagues"),
+    locations = cells_column_labels(columns = p_value_median)
+  )  %>%
+  #Creating footnote to explain coloring of the cells
+  tab_footnote(
+    footnote = md("Blue cell notes row with highest maximum attendence. Gray cell notes row with lowest minimum attendance.")) %>%
+  fmt_missing(columns = everything(), missing_text = "—") %>%
+  #Adding descriptive caption for the table
+  tab_source_note(
+    source_note = md("**Table 1 caption:** Table presents basic summary statistics (i.e., mean, median, min, and max) home game attendance by league, demonstrating that there are substantial differences in game attendence by sport, with attendance being highest for NFL games and lowest for NHL games.")
+  ) 
+
+# Print table
+gt_table
+
+
+
+
+```
+
+

@@ -292,5 +292,12 @@
     "title": "Rayleen Lewis's Data Analysis Portfolio",
     "section": "",
     "text": "This folder contains a simple made-up data-set in an Excel file.\nIt contains the variables Height, Weight and Gender of a few imaginary individuals.\nThe dataset purposefully contains some faulty entries that need to be cleaned.\nGenerally, any dataset should contain some meta-data explaining what each variable in the dataset is. (This is often called a Codebook.) For this simple example, the codebook is given as a second sheet in the Excel file.\nThis raw data-set should generally not be edited by hand. It should instead be loaded and processed/cleaned using code."
+  },
+  {
+    "objectID": "presentation-exercise/presentation-exercise.html",
+    "href": "presentation-exercise/presentation-exercise.html",
+    "title": "Presenting Data and Results",
+    "section": "",
+    "text": "This week is all about data presentation!\nThe staff at 538 of ABC News included a graphic showing the average regular-season home game attendance for all teams in the Big Four North American men’s professional sports leagues. This was part of their 25 coolest charts we made in 2023 list."
   }
 ]

@@ -12,12 +12,14 @@ website:
         menu:
           - text: "Starter Analysis Exercise"
             file: starter-analysis-exercise/products/report/starter-analysis-report.qmd
-          - text: "CDC data exercise"
-            file: cdcdata-exercise/cdcdata-exercise.qmd
-          - text: "Data exercise"
-            file: data-exercise/data-exercise.qmd
           - text: "R Coding Exercise"
             file: coding-exercise/coding-exercise.qmd
+          - text: "Data exercise"
+            file: data-exercise/data-exercise.qmd
+          - text: "CDC data exercise"
+            file: cdcdata-exercise/cdcdata-exercise.qmd
+          - text: "Presentation exercise"
+            file: presentation-exercise/presentation-exercise.qmd
     right:
       - icon: github 
         href: https://github.com/rml20258/rayleenlewis-MADA-portfolio
