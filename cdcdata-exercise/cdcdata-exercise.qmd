@@ -12,6 +12,7 @@ I'll be exploring COVID serologic data. This data set includes serologic results
 library(tidyverse)
 library(naniar)
 library(procs)
+library(corrplot)
 ```
 First, I import the data and check the level of missingness for each variable.
 
@@ -162,7 +163,7 @@ cor_matrix <- cor(covid_numeric, method = "pearson")
 print(cor_matrix)
 
 # Visualize correlation matrix
-library(corrplot)
+
 corrplot(cor_matrix, method = "color", col = colorRampPalette(c("red", "white", "blue"))(200),
          addCoef.col = "black", tl.col = "black", tl.cex = 1, number.cex = 1)
 ``` 

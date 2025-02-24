@@ -1,0 +1,476 @@
+---
+title: "Fitting exercise"
+format: html
+---
+
+```{r, echo = F, include = F}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(gt)
+library(gtsummary)
+library(caret)
+library(pROC)
+library(quarto)
+```
+
+
+## Importing data
+Data were downloaded from this [Git Hub repository](https://github.com/metrumresearchgroup/BayesPBPK-tutorial/blob/master/data/Mavoglurant_A2121_nmpk.csv).
+
+```{r}
+#Importing csv
+data <- read_csv(here("fitting-exercise","Mavoglurant_A2121_nmpk.csv"))
+head(data)
+str(data)
+```
+
+
+
+
+## Data exploration
+Performing several data exploration steps:
+
+1. Creating a visualization of the outcome over time by dose level for each individual
+2. Looking at the structure
+
+```{r}
+#Creating figure of DV by time for each person by dose level 
+ggplot(data, aes(x = TIME, y = DV, group = ID)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~DOSE) +  # Facet by DOSE
+  labs(title = "Individual Response Over Time by Dose Level",
+       x = "Time",
+       y = "Dependent Variable (DV)") +
+  theme_minimal()
+
+#Looking at the structure of the data
+#summary(data)
+#str(data)
+#head(data, n = 30)
+
+#Confirming OCC values for people, some have OCC = 1 and OCC = 2
+occ_check <- table(data$ID, data$OCC) 
+
+```
+
+## Data cleaning steps
+
+Since some people have OCC values of both 1 and 2, I'm restricting the data to observations with OCC values = 1 as instructed.
+```{r}
+#Restricting to rows where OCC = 1
+data2 <- data %>%
+  filter(OCC == 1) 
+
+#Calculating sum of DV for each person
+DV_sum <- data2%>%
+  filter(TIME != 0) %>%
+  group_by(ID) %>%
+  summarize(Y = sum(DV))
+
+#Restricting data to only rows where time = 0
+time_0 <- data2 %>%
+  filter(TIME == 0)
+
+#Joining sum of DV with other participant characteristics
+data3 <- left_join(time_0, DV_sum, by = join_by(ID))
+
+data4 <- data3 %>%
+  dplyr::select(Y, DOSE, AGE, SEX, RACE, WT, HT) %>% #restricing to variables of interest
+  mutate(RACE = as_factor(RACE), SEX = as_factor(SEX)) #converting race and sex to factor variables
+str(data4) #confirming the data cleaning steps worked as intended
+
+```
+
+## Exploratory data analysis
+A summary of the distribution of each variable is provided below. For factor variables, n (%) is presented, and for numeric variables, the median (interquartile range) is shown. 
+
+To visually inspect the data, histograms of each numeric variables is shown, as well as bivariate plots of Y by each variable (overlaid histograms for factor variables, scatterplots for continuous variables)
+
+```{r}
+tbl_summary(data4)
+
+
+#Histogram of age
+ggplot(data4, aes(x = AGE)) +
+  geom_histogram(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Histogram of AGE",
+       x = "Age",
+       y = "Count") +
+  theme_minimal()
+
+#Histogram of weight
+ggplot(data4, aes(x = WT)) +
+  geom_histogram(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Histogram of WT",
+       x = "Weight",
+       y = "Count") +
+  theme_minimal()
+
+#Histogram of HT
+ggplot(data4, aes(x = HT)) +
+  geom_histogram(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Histogram of HT",
+       x = "Height",
+       y = "Count") +
+  theme_minimal()
+
+
+#Histogram of Y by sex
+ggplot(data4, aes(x = Y, fill = SEX)) +
+  geom_histogram(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Histogram of Y by SEX",
+       x = "Y",
+       y = "Count",
+       fill = "Sex") +
+  theme_minimal()
+
+
+#Histogram of Y by dose
+ggplot(data4, aes(x = Y, fill = as_factor(DOSE))) +
+  geom_histogram(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Histogram of Y by DOSE",
+       x = "Y",
+       y = "Count",
+       fill = "DOSE") +
+  theme_minimal()
+
+#Scatterplot of Y by dose
+ggplot(data4, aes(y = Y, x=DOSE)) +
+  geom_point() +
+  labs(title = "Scatterplot of Y by DOSE",
+       x = "Y",
+       y = "Count") +
+  theme_minimal()
+
+
+#Histogram of Y by RACE
+ggplot(data4, aes(x = Y, fill = RACE)) +
+  geom_histogram(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Histogram of Y by RACE",
+       x = "Y",
+       y = "Count",
+       fill = "RACE") +
+  theme_minimal()
+
+
+#Scatterplot of Y by age
+ggplot(data4, aes(x = AGE, y = Y)) +
+  geom_point() +
+  labs(title = "Scatterplot of Y by age",
+       x = "Age",
+       y = "Y") +
+  geom_smooth() +
+  theme_minimal()
+
+#Scatterplot of Y by weight
+ggplot(data4, aes(x = WT, y = Y)) +
+  geom_point() +
+  labs(title = "Scatterplot of Y by WT",
+       x = "Weight",
+       y = "Y") +
+  geom_smooth() +
+  theme_minimal()
+
+#Scatterplot of Y by height
+ggplot(data4, aes(x = HT, y = Y)) +
+  geom_point() +
+  labs(title = "Scatterplot of Y by HT",
+       x = "Height",
+       y = "Y") +
+  geom_smooth() +
+  theme_minimal()
+
+
+```
+
+#### EDA Notes
++ 49% of people had a dose of 25
++ Age seems bimodal with peaks around ages 26 and 38. 
++ Sex = 1 was most common (87%)
++ Race = 1 was most common (62%), some people did have a race of 88 which is commonly a category for missing but I won't do any cleaning relaed to this since I'm not sure exactly what 88 means without a codebook
++ Median WT was 82, WT was relatively normally distributed
++ Median HT was 1.77, HT was left-skewed, but deviations from normal weren't egregious
++ Distribution of Y does not appear to vary substantially by sex and race (based on histograms)
++ There appear to be distinct distributions of Y by dose level and there appears to be a dose response; Y is lower for dose of 25 and higher for dose of 50.
++ There appears to be no association between Y and age
++ There may a weak negative association between Y and both WT and HT
+
+## Model fitting
+
+Several models will be fit. 
+
+### Dose: Model 1
+Linear regression modeling Y as a function of Dose (modeled as a continuous variable)
+```{r}
+lin_reg_model <- linear_reg() %>%
+  set_engine("lm") %>%
+  set_mode("regression")
+
+# Create a recipe
+lin_reg_recipe <- recipe(Y ~ DOSE, data = data4) %>%
+  step_dummy(all_nominal_predictors())  # Convert categorical predictors to dummy variables
+
+# Create a workflow
+lin_reg_workflow <- workflow() %>%
+  add_model(lin_reg_model) %>%
+  add_recipe(lin_reg_recipe)
+
+# Fit the model
+lin_reg_fit <- fit(lin_reg_workflow, data = data4)
+
+# View results
+tidy(lin_reg_fit)
+
+# Generate predictions on the test set
+predictions <- predict(lin_reg_fit, new_data = data4) %>%
+  bind_cols(data4)  # Combine with actual values
+
+table(predictions$DOSE, predictions$.pred) #Looks like the predictions output correctly, every row with dose = 25 has the same Y 
+
+# Compute RMSE and R-squared
+reg_metrics <- predictions %>%
+  metrics(truth = Y, estimate = .pred) %>%
+  filter(.metric %in% c("rmse", "rsq"))  # Extract only RMSE and R-squared
+
+# Print results
+print(reg_metrics)
+```
+
+#### Summary of model parameters:
+The average level of Y is 323.06 when dose = 0. There was a strong positive association between dose and Y. For each 1-unit increase in dose, Y increases by 58.21.
+
+The model's RMSE was `r reg_metrics %>%  filter(.metric == "rmse") %>% pull(.estimate)`, and the R^2^ value was `r reg_metrics %>%  filter(.metric == "rsq") %>% pull(.estimate)`. 
+
+
+### Dose: Model 2
+Linear regression modeling Y as a function of DOSE, AGE, SEX, RACE, WT, and HT
+```{r}
+# Create a recipe
+lin_reg_recipe2 <- recipe(Y ~ DOSE + AGE + SEX + RACE + WT + HT, data = data4) %>%
+  step_dummy(all_nominal_predictors())  # Convert categorical predictors to dummy variables
+
+# Create a workflow
+lin_reg_workflow2 <- workflow() %>%
+  add_model(lin_reg_model) %>%
+  add_recipe(lin_reg_recipe2)
+
+# Fit the model
+lin_reg_fit2 <- fit(lin_reg_workflow2, data = data4)
+
+# View results
+tidy(lin_reg_fit2)
+
+# Generate predictions on the test set
+predictions2 <- predict(lin_reg_fit2, new_data = data4) %>%
+  bind_cols(data4)  # Combine with actual values
+
+# Compute RMSE and R-squared
+reg_metrics2 <- predictions2 %>%
+  metrics(truth = Y, estimate = .pred) %>%
+  filter(.metric %in% c("rmse", "rsq"))  # Extract only RMSE and R-squared
+
+# Print results
+print(reg_metrics2)
+```
+
+
+#### Summary of model parameters
+After adjustment for age, wt, ht, sex, and race, there was a strong positive association between dose and Y. For each 1-unit increase in dose, Y increases by 59.93, after adjusting for other characteristics. The magnitude of the association between dose and Y was comparable in the unadjusted and adjusted models. Weight (assuming this is weight based on the name WT) was the only other significant predictor of Y after adjusting for other characteristics.
+
+The model's RMSE was `r reg_metrics2 %>%  filter(.metric == "rmse") %>% pull(.estimate)`, and the R^2^ value was `r reg_metrics2 %>%  filter(.metric == "rsq") %>% pull(.estimate)`.The RMSE was lower and the R^2^ value was higher in the adjusted model compared to unadjusted, indicating the adjusted model explains more of the variation in Y than the unadjusted model. 
+
+
+### Dose: Model 3
+Linear regression modeling Y as a function of Dose (modeled as a factor)
+```{r}
+
+data4 <- data4 %>%
+  mutate(dose_f = as_factor(DOSE))
+
+# Create a recipe
+lin_reg_recipe3 <- recipe(Y ~ dose_f, data = data4) 
+
+# Create a workflow
+lin_reg_workflow3 <- workflow() %>%
+  add_model(lin_reg_model) %>%
+  add_recipe(lin_reg_recipe3)
+
+# Fit the model
+lin_reg_fit3 <- fit(lin_reg_workflow3, data = data4)
+
+# View results
+tidy(lin_reg_fit3)
+
+# Generate predictions on the test set
+predictions3 <- predict(lin_reg_fit3, new_data = data4) %>%
+  bind_cols(data4)  # Combine with actual values
+
+table(predictions3$DOSE, predictions3$.pred) #Looks like the predictions output correctly, every row with dose = 25 has the same Y 
+
+# Compute RMSE and R-squared
+reg_metrics3 <- predictions3 %>%
+  metrics(truth = Y, estimate = .pred) %>%
+  filter(.metric %in% c("rmse", "rsq"))  # Extract only RMSE and R-squared
+
+# Print results
+print(reg_metrics3)
+```
+Because there were only 3 levels of dose, I also wanted to see how a model treating dose as a factor fit. The model fit statistics (RMSE and R^2^) were the exact same as the unadjusted model using a continuous dose. There were small differences in the expected mean Y for each dose group, which is expected given the assumption of a linear association between dose and Y when dose is considered continuous.
+
+
+
+### Sex: Model 1
+Logistic regression modeling sex as a function of Dose (modeled as a continuous variable)
+```{r}
+
+# Define the logistic regression model
+log_reg_model <- logistic_reg() %>%
+  set_engine("glm") %>%
+  set_mode("classification")
+
+# Create a recipe
+log_reg_recipe <- recipe(SEX ~ DOSE, data = data4) %>%
+  step_dummy(all_nominal_predictors())  # Convert categorical predictors to dummy variables
+
+# Create a workflow
+log_reg_workflow <- workflow() %>%
+  add_model(log_reg_model) %>%
+  add_recipe(log_reg_recipe)
+
+# Fit the model
+log_reg_fit <- fit(log_reg_workflow, data = data4)
+
+# Generate predictions_sex on the test set
+predictions_sex <- predict(log_reg_fit, new_data = data4, type = "prob") %>%
+  bind_cols(data4)%>%
+  mutate(pred_sex = if_else(.pred_1 > 0.87, 1, 2), pred_sex_f = as_factor(pred_sex))
+#0.87 was used as the cut-off for determining sex based on the sample, 87% of people were sex = 1
+#I tried 0.5 first, but all people were coded as sex = 1 which created some issues in code later
+
+#Checking to make sure the creation of the predicted sex variable (both numeric and factor) worked - looks good
+table(predictions_sex$.pred_1,predictions_sex$SEX)
+table(predictions_sex$pred_sex,predictions_sex$SEX)
+
+# Compute performance metrics: ROC AUC
+AUC <- predictions_sex %>%
+  roc_auc(truth = SEX, .pred_1) 
+#Also wanted to look at the ROC 
+ROC <- predictions_sex %>%
+  roc_curve(truth = SEX, .pred_1) 
+autoplot(ROC)
+
+#Compute performance metric: accuracy
+accur <- predictions_sex %>%  
+  accuracy(truth = SEX, estimate = pred_sex_f)
+
+#Combine ROC AUC and accuracy
+log_metrics <- bind_rows(AUC, accur)
+
+# Extract the logistic regression model coefficients using tidy() from broom package
+log_reg_coefficients <- tidy(log_reg_fit) 
+
+# Exponentiate the coefficients to get the odds ratios
+log_reg_odds_ratios <- log_reg_coefficients %>%
+  mutate(odds_ratio = exp(estimate))  # Exponentiating the coefficients
+
+# Print the exponentiated coefficients (odds ratios)
+print(log_reg_odds_ratios)
+
+# Print results
+print(log_metrics)
+
+# Checking accuracy using a different package that I'm more familiar with
+mini <- predictions_sex %>%
+  dplyr::select(SEX,pred_sex_f)
+confusionMatrix(mini$pred_sex_f, reference = mini$SEX)
+# Accuracy matches what's printed above using the tidymodels framework
+
+
+
+```
+#### Summary of model parameters
+There is not a significant association between dose and sex. This is apparent from the beta from dose, which is close to 0 (and the p-value of 0.19 comparing the beta to 0). Since this beta represents changes on the log(odds) scale, it may be easier to interpret the exponeniated beta, which is the odds ratio. The odds ratio is 0.97, demonstrating there is not a meaningful associations between dose and sex (since it's close to 1).
+
+The model's ROC-AUC was `r log_metrics %>%  filter(.metric == "roc_auc") %>% pull(.estimate)`, and the accuracy was `r log_metrics %>%  filter(.metric == "accuracy") %>% pull(.estimate)`.
+
+
+### Sex: Model 2
+Logistic regression modeling sex as a function of Dose (modeled as a continuous variable) adjusting for other characteristics
+```{r}
+
+# Create a recipe
+log_reg_recipe2 <- recipe(SEX ~ DOSE + AGE + SEX + RACE + WT + HT, data = data4) %>%
+  step_dummy(all_nominal_predictors())  # Convert categorical predictors to dummy variables
+
+# Create a workflow
+log_reg_workflow2 <- workflow() %>%
+  add_model(log_reg_model) %>%
+  add_recipe(log_reg_recipe2)
+
+# Fit the model
+log_reg_fit2 <- fit(log_reg_workflow2, data = data4)
+
+
+# Generate predictions on the test set
+predictions_sex2 <- predict(log_reg_fit2, new_data = data4, type = "prob") %>%
+  bind_cols(data4)%>%
+  mutate(pred_sex = if_else(.pred_1 > 0.87, 1, 2), pred_sex_f = as_factor(pred_sex))
+#0.87 was used as the cut-off for determining sex based on the sample, 87% of people were sex = 1
+
+#Taking a look at the distribution of the probability  of sex = 1
+ggplot(predictions_sex2, aes(x = .pred_1, fill = SEX)) +
+  geom_histogram(position = "identity", alpha = 0.5, color = "black") +
+  theme_minimal()
+
+
+# Compute performance metrics: ROC AUC
+AUC2 <- predictions_sex2 %>%
+  roc_auc(truth = SEX, .pred_1) 
+#Also wanted to look at the ROC 
+ROC2 <- predictions_sex2 %>%
+  roc_curve(truth = SEX, .pred_1) 
+autoplot(ROC2)
+
+#Compute performance metric: accuracy
+accur2 <- predictions_sex2 %>%  
+  accuracy(truth = SEX, estimate = pred_sex_f)
+
+#Combine ROC AUC and accuracy
+log_metrics2 <- bind_rows(AUC2, accur2)
+
+
+
+# Extract the logistic regression model coefficients using tidy() from broom package
+log_reg_coefficients2 <- tidy(log_reg_fit2) 
+
+# Exponentiate the coefficients to get the odds ratios
+log_reg_odds_ratios2 <- log_reg_coefficients2 %>%
+  mutate(odds_ratio = exp(estimate))  # Exponentiating the coefficients
+
+# Print the exponentiated coefficients (odds ratios)
+print(log_reg_odds_ratios2)
+
+# Print results
+print(log_metrics2)
+
+#Trying another method to get AUC
+roc_curve <- roc(predictions_sex2$SEX, predictions_sex2$.pred_2)
+#This AUC matched the tidymodels framework from above
+
+# Plot the ROC curve
+plot(roc_curve, main = "ROC Curve", col = "blue", lwd = 2)
+
+# Optionally, print AUC value
+cat("AUC: ", auc(roc_curve))
+```
+#### Summary of model parameters
+In the adjusted model, the association between dose and sex than in the unadjusted model (unadjusted beta = -0.03, adjusted beta = -0.10). Of the included predictors, the strongest association was seen between sex and height after adjusting for other characteristics.
+
+The model's ROC-AUC was `r log_metrics2 %>%  filter(.metric == "roc_auc") %>% pull(.estimate)`, and the accuracy was `r log_metrics2 %>%  filter(.metric == "accuracy") %>% pull(.estimate)`. The ROC-AUC and accuracy were much higher in the adjusted model than the unadjusted model, which makes sense given the strong association between height and sex.
+
+
+
+## Conclusions
+Dose was positively associated with Y, and the magnitude of the association of dose on Y was similar in the adjusted and unadjusted models. For the logistic regression models modeling sex, dose was not associated with sex, which isn't surprising. Unless doseage was dependent on some other factor associated with sex (like weight), I wouldn't expect there to be an association here. In adjusted models, height had the strongest associations with sex.
