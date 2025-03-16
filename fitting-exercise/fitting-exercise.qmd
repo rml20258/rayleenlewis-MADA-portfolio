@@ -474,3 +474,161 @@ The model's ROC-AUC was `r log_metrics2 %>%  filter(.metric == "roc_auc") %>% pu
 
 ## Conclusions
 Dose was positively associated with Y, and the magnitude of the association of dose on Y was similar in the adjusted and unadjusted models. For the logistic regression models modeling sex, dose was not associated with sex, which isn't surprising. Unless doseage was dependent on some other factor associated with sex (like weight), I wouldn't expect there to be an association here. In adjusted models, height had the strongest associations with sex.
+
+# Module 10
+First, I am setting a set, then splitting the data into train and test datasets. 75% of the data will go into the train dataset.
+```{r}
+#Setting seed
+rngseed = 1234
+
+#Dropping race from data
+data_m10 <- data4 %>%
+  dplyr::select(-RACE)
+
+set.seed(rngseed)
+# Put 3/4 of the data into the training set 
+data_m10_split <- initial_split(data_m10, prop = 3/4)
+
+# Create data frames for the test/train sets:
+train_data <- training(data_m10_split)
+test_data  <- testing(data_m10_split)
+
+```
+
+Next, I am running 3 models with Y as the outcome: a null model (no predictors), a model with dose as the only predictor, and a model with all variables included as predictors.
+
+```{r}
+
+# Define a simple linear model with only DOSE as predictor
+lm_dose <- linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression")
+
+lm_dose_wf <- workflow() %>% 
+  add_model(lm_dose) %>% 
+  add_formula(Y ~ DOSE)
+
+# Define a linear model with all predictors
+lm_all <- linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression")
+
+lm_all_wf <- workflow() %>% 
+  add_model(lm_all) %>% 
+  add_formula(Y ~ .)
+
+# Fit both models on the training data
+lm_dose_fit <- lm_dose_wf %>% fit(train_data)
+lm_all_fit <- lm_all_wf %>% fit(train_data)
+
+# Compute predictions on training data
+preds_dose <- predict(lm_dose_fit, train_data) %>% bind_cols(train_data)
+preds_all <- predict(lm_all_fit, train_data) %>% bind_cols(train_data)
+
+# Compute RMSE for both models
+rmse_dose <- rmse(preds_dose, truth = Y, estimate = .pred)
+rmse_all <- rmse(preds_all, truth = Y, estimate = .pred)
+
+# Select the best model
+best_model <- ifelse(rmse_all$.estimate < rmse_dose$.estimate, "All Predictors", "DOSE Only")
+
+# Compute RMSE of a null model
+null_pred <- mean(train_data$Y)
+data_train_null <- train_data %>% mutate(pred = null_pred)
+rmse_null <- rmse(data_train_null, truth = Y, estimate = pred)
+
+# Output RMSE results and identify which model has the lowest RMSE
+list(
+  RMSE_DOSE = rmse_dose$.estimate,
+  RMSE_ALL = rmse_all$.estimate,
+  Best_Model = best_model,
+  RMSE_NULL = rmse_null$.estimate
+)
+
+```
+
+The RMSE was 948 for the null model, 702 for the model with only dose, and 627 for the model with all predictors. Among these three models, the one that includes all predictors has the lowest RMSE, and is therefore the "best" performing. 
+
+
+#### Cross validation
+
+```{r}
+set.seed(rngseed)
+#Getting the CV folds established
+folds <- vfold_cv(train_data, v = 10)
+
+
+#Setting up workflow for the "all predictors" model
+allpred_wf <- 
+  workflow() %>%
+  add_model(lm_all) %>%
+  add_formula(Y ~ .)
+
+set.seed(rngseed)
+allpred_fit_rs <- 
+  allpred_wf %>% 
+  fit_resamples(folds)
+
+#Getting mean RMSE of 10 folds
+collect_metrics(allpred_fit_rs)
+
+
+#Setting up workflow for the "all predictors" model
+dose_wf <- 
+  workflow() %>%
+  add_model(lm_dose) %>%
+  add_formula(Y ~ DOSE)
+
+set.seed(rngseed)
+dose_fit_rs <- 
+  dose_wf %>% 
+  fit_resamples(folds)
+
+#Getting mean RMSE of 10 folds
+collect_metrics(dose_fit_rs)
+
+```
+
+Using cross validation, the mean (se) RMSE for the "all predictors" model is 652.77 (63.60), which is lower than for the "dose only" model, which has an RMSE of 690.54 (67.50). The relative standard error (se/mean*100) is about 10%. Both RMSEs were larger for the CV models than the models that used all training data above. However, the RMSEs from above do fall within 1 standard error of the CV RMSEs, and the "all predictors" model is still the better fitting model.
+
+
+#### Cross validation using new seed
+
+```{r}
+set.seed(1143)
+#Getting the CV folds established
+folds2 <- vfold_cv(train_data, v = 10)
+
+
+#Setting up workflow for the "all predictors" model
+allpred_wf2 <- 
+  workflow() %>%
+  add_model(lm_all) %>%
+  add_formula(Y ~ .)
+
+set.seed(1143)
+allpred_fit_rs2 <- 
+  allpred_wf2 %>% 
+  fit_resamples(folds2)
+
+#Getting mean RMSE of 10 folds
+collect_metrics(allpred_fit_rs2)
+
+
+#Setting up workflow for the "all predictors" model
+dose_wf2 <- 
+  workflow() %>%
+  add_model(lm_dose) %>%
+  add_formula(Y ~ DOSE)
+
+set.seed(1143)
+dose_fit_rs2 <- 
+  dose_wf2 %>% 
+  fit_resamples(folds2)
+
+#Getting mean RMSE of 10 folds
+collect_metrics(dose_fit_rs2)
+
+```
+Using a different seed for the cross validation, the mean RMSE is smaller and less variable for both models (although the differences aren't dramatic): 641.80 (60.52) vs 652.77 (63.60) for the full model, 686.84 (61.73) vs 690.54 (67.50) for the dose only model.
+
