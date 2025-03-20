@@ -661,8 +661,8 @@ All redicted values from three models have been combined into a dataset. In the 
 ggplot(combined_preds, aes(x = Y, y = .pred, color = model, shape = model)) +
   geom_point(alpha = 0.5, size = 4) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
-  scale_x_continuous(limits = c(0, 5000)) +  # Set x-axis limits
-  scale_y_continuous(limits = c(0, 5000)) +  # Set y-axis limits
+  scale_x_continuous(limits = c(0, 6000)) +  # Set x-axis limits
+  scale_y_continuous(limits = c(0, 6000)) +  # Set y-axis limits
   scale_color_manual(values = c("All Predictors" = "#CDAA7D", 
                                 "Dose" = "#98F5FF", 
                                 "Null" = "#8968CD")) +
@@ -683,8 +683,8 @@ The plot seems mixed up, we can make it more readible by create individual plot 
 ggplot(combined_preds, aes(x = Y, y = .pred, color = model, shape = model)) +
   geom_point(alpha = 0.7, size = 2) +  # Scatter plot with transparency
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
-  scale_x_continuous(limits = c(0, 5000)) +  # Set x-axis limits
-  scale_y_continuous(limits = c(0, 5000)) +  # Set y-axis limits
+  scale_x_continuous(limits = c(0, 6000)) +  # Set x-axis limits
+  scale_y_continuous(limits = c(0, 6000)) +  # Set y-axis limits
   scale_color_manual(values = c("All Predictors" = "#CDAA7D", 
                                 "Dose" = "#98F5FF", 
                                 "Null" = "#8968CD")) +
@@ -832,6 +832,8 @@ combined_preds <- bind_rows(preds_all_train, preds_all_test)
 # Plot predicted vs. observed values
 ggplot(combined_preds, aes(x = Y, y = .pred, color = Data)) +
   geom_point(alpha = 0.6) +
+  scale_x_continuous(limits = c(0, 6000)) +  # Set x-axis limits
+  scale_y_continuous(limits = c(0, 6000)) +  # Set y-axis limits
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
   labs(
     title = "Predicted vs. Observed Values",
@@ -849,5 +851,5 @@ Using RMSE as a metric for model performance, both the “dose-only” and “al
 
 The dose-only model has a much lower RMSE than the null model (702.8 vs 948.4). Given that Y increases dramatically with dose, this is not surprising (predicted mean values are 1783, 2464, and 3239 for the 25, 37.5, and 50 dose groups respectively). This model is useful for giving a “quick and dirty” estimate of the level of Y you’d expect for someone in each dose group. However, this doesn’t account for factors that could affect Y and help determine your dose group. For example, if women are disproportionately more likely to get a dose of 25, this estimated Y may be more indicative of someone being a woman than the actual dose.
 
-The “all predictors” model had a lower RMSE than either of the other models (646) indicating improved fit. This model helps to overcome some of the pitfalls of the “dose-only.” For each, including additional variables in the model can help account for factors that are related to why a person got a specific dose. If a person wanted an individualized prediction of their level of Y on a given dose, this would be the model to use. Interestingly, this model performed very well on the test data (RMSE = 520). I expected fit of the test data using the model built from the training data to perform worse than the training data model. Looking at the scatterplot above, this may be due to the fact that fewer of the test observations appear to be outliers. 
+The “all predictors” model had a lower RMSE than either of the other models (646) indicating improved fit. This model helps to overcome some of the pitfalls of the “dose-only.” For each, including additional variables in the model can help account for factors that are related to why a person got a specific dose. If a person wanted an individualized prediction of their level of Y on a given dose, this would be the model to use. Interestingly, this model performed very well on the test data (RMSE = 520). I expected fit of the test data using the model built from the training data to perform worse than the training data model. Looking at the scatterplot above, this may be due to the fact that fewer of the test observations appear to be outliers (i.e., are far away from the "perfect fit" dashed black line). 
 
