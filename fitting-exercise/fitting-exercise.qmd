@@ -632,3 +632,173 @@ collect_metrics(dose_fit_rs2)
 ```
 Using a different seed for the cross validation, the mean RMSE is smaller and less variable for both models (although the differences aren't dramatic): 641.80 (60.52) vs 652.77 (63.60) for the full model, 686.84 (61.73) vs 690.54 (67.50) for the dose only model.
 
+
+# Module 10 Part 2: This section is contributed by MUhammad Nasir 
+
+In this part, I will visualise the result by combined all predicted values from the models in previous part (part 1). 
+```{r}
+#selecting results from model with only DOSE Predictors
+dose_pred <- preds_dose %>%
+  select(.pred, Y) %>%
+  mutate(model = "Dose")
+
+#selecting results from model with all Predictors
+all_pred <- preds_all %>%
+  select(.pred, Y) %>%
+  mutate(model = "All Predictors")
+
+#Observed values from Null models
+ob_null_pred <- as_tibble(cbind(null_pred,preds_dose$Y)) %>% mutate(model = "Null") %>% rename(.pred = null_pred, Y = V2)
+
+#combining all prediction into one dataset
+
+combined_preds <- rbind(dose_pred, all_pred, ob_null_pred)
+```
+
+All redicted values from three models have been combined into a dataset. In the next step, plots are created to visualize the predicted values by observed values. 
+
+```{r}
+ggplot(combined_preds, aes(x = Y, y = .pred, color = model, shape = model)) +
+  geom_point(alpha = 0.5, size = 4) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  scale_x_continuous(limits = c(0, 5000)) +  # Set x-axis limits
+  scale_y_continuous(limits = c(0, 5000)) +  # Set y-axis limits
+  scale_color_manual(values = c("All Predictors" = "#CDAA7D", 
+                                "Dose" = "#98F5FF", 
+                                "Null" = "#8968CD")) +
+  scale_shape_manual(values = c("All Predictors" = 18,  
+                                "Dose" = 17,       
+                                "Null" = 19)) +        
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Values",
+       x = "Observed Values",
+       y = "Predicted Values",
+       color = "Model",
+       shape = "Model")
+```
+
+The plot seems mixed up, we can make it more readible by create individual plot based on the model. 
+```{r}
+# Create the plot with facets
+ggplot(combined_preds, aes(x = Y, y = .pred, color = model, shape = model)) +
+  geom_point(alpha = 0.7, size = 2) +  # Scatter plot with transparency
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  scale_x_continuous(limits = c(0, 5000)) +  # Set x-axis limits
+  scale_y_continuous(limits = c(0, 5000)) +  # Set y-axis limits
+  scale_color_manual(values = c("All Predictors" = "#CDAA7D", 
+                                "Dose" = "#98F5FF", 
+                                "Null" = "#8968CD")) +
+  scale_shape_manual(values = c("All Predictors" = 18,  
+                                "Dose" = 17,       
+                                "Null" = 19)) +  
+  theme_minimal() +  # Use a minimal theme
+  labs(title = "Observed vs. Predicted Values",
+       x = "Observed Values",
+       y = "Predicted Values") +
+  facet_wrap(~model)  # Create facets for each model
+```
+
+From the plots, the Null model only includes an intercept, meaning it predicts the same value (the mean of Y) for all observations. This results in a single horizontal line because the predicted value does not vary with the observed values. For the model with Dose as the only predictor,  DOSE has a few discrete levels (e.g., three different doses), the model produces only three unique predicted values corresponding to the mean Y at each dose level, resulting three horizontal bands—each band corresponds to a different dose level.
+
+
+As discussed previously that Model 2, the model with all predictors, is the best model. We will plot the residual to looking at the residual distribution. 
+```{r}
+m2_res <-  preds_all %>%
+  mutate(all_resid = .pred - Y)
+
+
+# creating a plot to vizualise the residuals 
+ggplot(m2_res, aes(x = .pred, y = all_resid)) +
+  geom_point() +  # Scatter plot 
+  geom_abline(slope = 0, intercept = 0, linetype = "solid", color = "black") +  # line at 0
+  theme_minimal() +  # Use a minimal theme
+  labs(title = "Predicted vs. residuals",
+       x = "Predicted Values",
+       y = "Residuals")
+```
+We can see some residual pattern and the positive residuals are greater. 
+
+
+
+I will take 100 bootstrap samples from the training data. For each sample, I’ll run a linear regression model using all variables as predictors and extract the predicted value. I’ll get the median and 89% CI of the predictions from the bootstrap samples for each point.
+Now, I want to creat 100 bootrsrap sample from the training data. 
+
+```{r}
+set.seed(rngseed) # set seed for reproducibility
+
+# Create 100 bootstraps from train_data
+dat_bs <- bootstraps(train_data, times = 100, strata = DOSE)
+
+
+# Create an empty list to store predictions
+pred_list <- vector("list", length(dat_bs$splits))
+
+# Loop over each bootstrap sample, fit the model, and make predictions
+for (i in seq_along(dat_bs$splits)) {
+  
+  # Extract the bootstrap sample
+  dat_sample <- analysis(dat_bs$splits[[i]])
+  
+  # Fit Model 2 to the bootstrap sample
+  model_fit <- lm_all_fit %>% fit(data = dat_sample)
+  
+  # Make predictions on the original training data
+  pred_list[[i]] <- predict(model_fit, new_data = train_data)$.pred
+}
+
+# Convert list of predictions to a matrix
+pred_bs <- do.call(cbind, pred_list)
+
+
+# Compute the  Median predictions and 89% Confidence Intervals (CIs) (5.5% and 94.5% quantiles)
+
+# Compute median and 89% confidence intervals
+preds <- apply(pred_bs, 1, quantile, c(0.055, 0.5, 0.945)) |> t()
+
+# Convert to a data frame for plotting
+preds_df <- data.frame(
+  observed = train_data$Y,       # True Y values
+  predicted = rowMeans(pred_bs),    # Mean prediction
+  lower = preds[, 1],               # Lower bound of CI
+  median = preds[, 2],              # Median prediction
+  upper = preds[, 3]                # Upper bound of CI
+)
+
+```
+Visualization 
+```{r}
+# Ensure preds_df has necessary data
+preds_long <- preds_df %>%
+  pivot_longer(cols = c(median, predicted), names_to = "Type", values_to = "Value")
+
+ggplot() + 
+  # Add error bars for confidence intervals (Red)
+  geom_errorbar(data = preds_df, 
+                aes(x = observed, ymin = lower, ymax = upper, color = "CI"), 
+                width = 0, alpha = 0.6, size = 0.8) +
+
+  # Add median prediction points (Blue)
+  geom_point(data = filter(preds_long, Type == "median"), 
+             aes(x = observed, y = Value, color = "Median"), size = 4) +  
+
+  # Add mean prediction points (Orange Diamond)
+  geom_point(data = filter(preds_long, Type == "predicted"), 
+             aes(x = observed, y = Value, color = "Mean"), size = 3, shape = 18) +  
+
+  # Add 45-degree reference line (Black Dashed)
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +  
+
+  # Labels and theme
+  labs(title = "Observed vs. Predicted with Confidence Intervals",
+       x = "Observed Values",
+       y = "Predicted Values",
+       color = "Legend") +  # Set legend title
+  
+  # Manually define legend colors
+  scale_color_manual(values = c("CI" = "green", "Median" = "pink", "Mean" = "purple"),
+                     labels = c("89% CI", "Median", "Mean")) +
+
+  theme_minimal()
+```
+
+The bootstrap prediction plot demonstrates that Model 2 captures the general relationship between observed and predicted values, with most points clustering around the 45-degree reference line. The mean and median predictions align closely, suggesting a symmetrical distribution of estimates. Confidence intervals (CIs) vary, with shorter CIs for lower observed values, indicating higher prediction certainty, while larger values exhibit wider CIs, reflecting greater uncertainty. Notably, the model tends to underestimate higher observed values, suggesting potential bias in extreme cases. These findings highlight the model’s overall reliability while indicating areas for improvement, such as feature engineering or alternative modeling approaches, to enhance predictive performance for larger values.
