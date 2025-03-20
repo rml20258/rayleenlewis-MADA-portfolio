@@ -483,7 +483,7 @@ rngseed = 1234
 
 #Dropping race from data
 data_m10 <- data4 %>%
-  dplyr::select(-RACE)
+  dplyr::select(-RACE, -dose_f)
 
 set.seed(rngseed)
 # Put 3/4 of the data into the training set 
@@ -573,7 +573,7 @@ allpred_fit_rs <-
 collect_metrics(allpred_fit_rs)
 
 
-#Setting up workflow for the "all predictors" model
+#Setting up workflow for the "dose only" model
 dose_wf <- 
   workflow() %>%
   add_model(lm_dose) %>%
@@ -589,7 +589,7 @@ collect_metrics(dose_fit_rs)
 
 ```
 
-Using cross validation, the mean (se) RMSE for the "all predictors" model is 652.77 (63.60), which is lower than for the "dose only" model, which has an RMSE of 690.54 (67.50). The relative standard error (se/mean*100) is about 10%. Both RMSEs were larger for the CV models than the models that used all training data above. However, the RMSEs from above do fall within 1 standard error of the CV RMSEs, and the "all predictors" model is still the better fitting model.
+Using cross validation, the mean (se) RMSE for the "all predictors" model is 645.69 (64.82), which is lower than for the "dose only" model, which has an RMSE of 690.54 (67.50). The relative standard error (se/mean*100) is about 10%, so there's some variability in the estimates, but it doesn't seem particularly unstable. Both RMSEs were larger for the CV models than the models that used all training data above. However, the RMSEs from above do fall within 1 standard error of the CV RMSEs, and the "all predictors" model is still the better fitting model.
 
 
 #### Cross validation using new seed
@@ -615,7 +615,7 @@ allpred_fit_rs2 <-
 collect_metrics(allpred_fit_rs2)
 
 
-#Setting up workflow for the "all predictors" model
+#Setting up workflow for the "dose only" model
 dose_wf2 <- 
   workflow() %>%
   add_model(lm_dose) %>%
@@ -630,7 +630,7 @@ dose_fit_rs2 <-
 collect_metrics(dose_fit_rs2)
 
 ```
-Using a different seed for the cross validation, the mean RMSE is smaller and less variable for both models (although the differences aren't dramatic): 641.80 (60.52) vs 652.77 (63.60) for the full model, 686.84 (61.73) vs 690.54 (67.50) for the dose only model.
+Using a different seed for the cross validation, the mean RMSE is smaller and less variable for both models (although the differences aren't dramatic): 637.09 (62.06) vs 645.69 (64.82) for the full model, 686.84 (61.73) vs 690.54 (67.50) for the dose only model.
 
 
 # Module 10 Part 2: This section is contributed by MUhammad Nasir 
@@ -802,3 +802,52 @@ ggplot() +
 ```
 
 The bootstrap prediction plot demonstrates that Model 2 captures the general relationship between observed and predicted values, with most points clustering around the 45-degree reference line. The mean and median predictions align closely, suggesting a symmetrical distribution of estimates. Confidence intervals (CIs) vary, with shorter CIs for lower observed values, indicating higher prediction certainty, while larger values exhibit wider CIs, reflecting greater uncertainty. Notably, the model tends to underestimate higher observed values, suggesting potential bias in extreme cases. These findings highlight the model’s overall reliability while indicating areas for improvement, such as feature engineering or alternative modeling approaches, to enhance predictive performance for larger values.
+
+
+# Module 10 - Part 3 (back to Rayleen Lewis)
+As a final step, I'll run the test data through the "all predictors" model fit with the training data
+```{r}
+
+# Make predictions on the test data using the full model
+preds_all_test <- predict(lm_all_fit, test_data) %>% bind_cols(test_data)
+
+# Compute RMSE for test data
+rmse_all_test <- rmse(preds_all_test, truth = Y, estimate = .pred)
+
+# Update RMSE list with test RMSE
+list(
+  RMSE_DOSE = rmse_dose$.estimate,
+  RMSE_ALL = rmse_all$.estimate,
+  RMSE_ALL_TEST = rmse_all_test$.estimate,
+  Best_Model = best_model,
+  RMSE_NULL = rmse_null$.estimate
+)
+
+# Combine training and test predictions
+preds_all_train <- preds_all %>% mutate(Data = "Train")
+preds_all_test <- preds_all_test %>% mutate(Data = "Test")
+
+combined_preds <- bind_rows(preds_all_train, preds_all_test)
+
+# Plot predicted vs. observed values
+ggplot(combined_preds, aes(x = Y, y = .pred, color = Data)) +
+  geom_point(alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  labs(
+    title = "Predicted vs. Observed Values",
+    x = "Observed Y",
+    y = "Predicted Y",
+    color = "Dataset"
+  ) +
+  theme_minimal()
+```
+
+
+# Conclusions
+
+Using RMSE as a metric for model performance, both the “dose-only” and “all predictors” models performed better than the null model (i.e., null model had highest RMSE). 
+
+The dose-only model has a much lower RMSE than the null model (702.8 vs 948.4). Given that Y increases dramatically with dose, this is not surprising (predicted mean values are 1783, 2464, and 3239 for the 25, 37.5, and 50 dose groups respectively). This model is useful for giving a “quick and dirty” estimate of the level of Y you’d expect for someone in each dose group. However, this doesn’t account for factors that could affect Y and help determine your dose group. For example, if women are disproportionately more likely to get a dose of 25, this estimated Y may be more indicative of someone being a woman than the actual dose.
+
+The “all predictors” model had a lower RMSE than either of the other models (646) indicating improved fit. This model helps to overcome some of the pitfalls of the “dose-only.” For each, including additional variables in the model can help account for factors that are related to why a person got a specific dose. If a person wanted an individualized prediction of their level of Y on a given dose, this would be the model to use. Interestingly, this model performed very well on the test data (RMSE = 520). I expected fit of the test data using the model built from the training data to perform worse than the training data model. Looking at the scatterplot above, this may be due to the fact that fewer of the test observations appear to be outliers. 
+
