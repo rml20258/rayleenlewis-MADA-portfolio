@@ -1,0 +1,397 @@
+---
+title: "ml-models-exercise"
+format: html
+---
+
+## Preliminaries
+First, I'll load the necessary packages and set a seed. 
+
+```{r, echo = F, include = F}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(gt)
+library(gtsummary)
+library(caret)
+library(pROC)
+library(quarto)
+library(GGally)
+library(tune)
+library(workflowsets)
+library(parsnip)
+library(ggplot2)
+
+library(glmnet) #LASSO
+library(ranger) #Random forest plots
+
+
+#Setting seed
+rngseed = 1234
+set.seed(rngseed)
+
+fitting_data <- readRDS(here("ml-models-exercise", "fitting_data.rds"))
+```
+
+## More data processing
+Based on one of the [original papers](https://link.springer.com/article/10.1007/s11095-014-1574-1#Tab1), the race values are likely: 1 = White, 2 = Black, 7 = Native American, 88 = Other. There are very few people coded as a race of 7 (n=2) and 88 (n=8), so these will be combined.
+```{r}
+#Table to see the frequency of each race/ethnicity
+table(fitting_data$RACE)
+
+#Combining 7 and 88 race to be race = 3
+fitting_data_ml <- fitting_data %>%
+  mutate(RACE = if_else(RACE == 1, 1,
+                if_else(RACE == 2, 2, 3)))
+#Checking new race coding
+table(fitting_data_ml$RACE)
+
+```
+## Pairwise correlations
+The next bit of code checks to see which variables are continuous and uses those to create a correlation plot. Because there are only 3 levels of dose, even though this is numeric, I'm not considering this as a continuous variable for these purposes.
+```{r}
+#Checking to see which variables are continuous (Y, age, wt, ht), I don't consider Dose as continuous since there are only 3 levels 
+summary(fitting_data_ml)
+
+#Creating correlation plot with continuous variables
+fitting_data_ml %>%
+  dplyr::select(Y, AGE, WT, HT) %>%
+  ggpairs()
+```
+Height is negatively correlated with age and positively correlated with weight, but these correlations are moderate and should not cause a major concern. 
+
+## Feature engineering
+Since there was a moderate correlation between weight and height, I'll combine these variables into a new variable, body mass index (BMI). Units aren't available for the variables, but based on the age (assuming this is in years) of the participants and values for height and weight, I'm assuming height is reported in meters and weight in kilograms. Therefore, BMI will be calculated as weight/height^2^.
+```{r}
+#Creating BMI
+fitting_data_ml <- fitting_data_ml %>%
+  mutate(BMI = WT/(HT^2))
+histogram(fitting_data_ml$BMI)
+#the distribution looks like we'd expect based on the distributions of HT and WT
+```
+
+
+## Model building
+
+### First fit
+The first step to model building is to build initial models. 
+
+First model, is the linear model. 
+```{r}
+# Define a linear model with all predictors
+lm_all <- linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression")
+
+lm_all_wf <- workflow() %>% 
+  add_model(lm_all) %>% 
+  add_formula(Y ~ .)
+
+# Fit both models on the training data
+lm_all_fit <- lm_all_wf %>% fit(fitting_data_ml)
+
+# Compute predictions on training data
+preds_lm_all <- predict(lm_all_fit, fitting_data_ml) %>% bind_cols(fitting_data_ml)
+
+# Compute RMSE for both models
+rmse_lm_all <- rmse(preds_lm_all, truth = Y, estimate = .pred)
+paste0("RMSE linear model:", rmse_lm_all$.estimate)
+
+# Create the scatter plot of observed vs predicted
+ggplot(preds_lm_all, aes(x = Y, y = .pred)) +
+  geom_point(color = "blue", alpha = 0.6) +  # Plot points
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +  # Ideal fit line
+  labs(title = "Observed vs. Predicted Values - Linear regression",
+       x = "Observed",
+       y = "Predicted") +
+  theme_minimal()
+```
+
+Second model, is the LASSO model. 
+```{r}
+set.seed(rngseed)
+# Define a linear model with all predictors
+lasso_all <- linear_reg(penalty = 0.1) %>% 
+  set_engine("glmnet") %>% 
+  set_mode("regression")
+
+lasso_all_wf <- workflow() %>% 
+  add_model(lasso_all) %>% 
+  add_formula(Y ~ .)
+
+# Fit both models on the training data
+lasso_all_fit <- lasso_all_wf %>% fit(fitting_data_ml)
+
+# Compute predictions on training data
+preds_lasso_all <- predict(lasso_all_fit, fitting_data_ml) %>% bind_cols(fitting_data_ml)
+
+# Compute RMSE for both models
+rmse_lasso_all <- rmse(preds_lasso_all, truth = Y, estimate = .pred)
+paste0("RMSE LASSO model:", rmse_lasso_all$.estimate)
+
+# Create the scatter plot of observed vs predicted
+ggplot(preds_lasso_all, aes(x = Y, y = .pred)) +
+  geom_point(color = "blue", alpha = 0.6) +  # Plot points
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +  # Ideal fit line
+  labs(title = "Observed vs. Predicted Values - LASSO",
+       x = "Observed",
+       y = "Predicted") +
+  theme_minimal()
+```
+
+
+
+Third model, is the random forest model. 
+```{r}
+set.seed(rngseed)
+
+# Define the model specification using the ranger engine
+rf_all <- rand_forest(mode = "regression") %>%
+  set_engine("ranger", seed = rngseed)
+
+
+rf_all_wf <- workflow() %>% 
+  add_model(rf_all) %>% 
+  add_formula(Y ~ .)
+
+# Fit both models on the training data
+rf_all_fit <- rf_all_wf %>% fit(fitting_data_ml)
+
+# Compute predictions on training data
+preds_rf_all <- predict(rf_all_fit, fitting_data_ml) %>% bind_cols(fitting_data_ml)
+
+# Compute RMSE for both models
+rmse_rf_all <- rmse(preds_rf_all, truth = Y, estimate = .pred)
+paste0("RMSE Random Forest model:", rmse_rf_all$.estimate)
+
+# Create the scatter plot of observed vs predicted
+ggplot(preds_rf_all, aes(x = Y, y = .pred)) +
+  geom_point(color = "blue", alpha = 0.6) +  # Plot points
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +  # Ideal fit line
+  labs(title = "Observed vs. Predicted Values - Random Forest",
+       x = "Observed",
+       y = "Predicted") +
+  theme_minimal()
+```
+
+#### Notes about initial model fit
+The RMSE from the linear and LASSO models were very similar with RMSEs of 581.The RMSE of the random forest model was smallest at 358. Predictions were also closer to the observed Y for the random forest model. For all 3 models, there are some points with high observed Y values that are not well predicted by the models.
+
+### Tuning the models
+
+
+
+```{r}
+library(tidymodels)
+set.seed(rngseed)
+
+# Define a grid of penalty values (lambda) from 1E-5 to 1E2 on a log scale
+lambda_grid <- 10^seq(log10(1E-5), log10(1E2), length.out = 50)
+
+# Define LASSO model with a tunable penalty
+lasso_model <- linear_reg(penalty = tune()) %>% 
+  set_engine("glmnet") %>% 
+  set_mode("regression")
+
+# Create workflow
+lasso_wf <- workflow() %>% 
+  add_model(lasso_model) %>% 
+  add_formula(Y ~ .)
+
+# Create resampling object using apparent()
+resamples <- apparent(fitting_data_ml)
+
+# Perform tuning with tune_grid()
+lasso_tune_results <- tune_grid(
+  lasso_wf,
+  resamples = resamples,
+  grid = tibble(penalty = lambda_grid),
+  metrics = metric_set(rmse),
+  control = control_grid(save_pred = TRUE)  # Ensure predictions are stored
+)
+
+# Collect tuning results
+lasso_results <- collect_metrics(lasso_tune_results)
+lasso_rmse <- lasso_tune_results$.metrics[[1]]
+#str(lasso_rmse)
+
+#Graphing RMSE by penalty
+ggplot(lasso_rmse, aes(x = penalty, y = .estimate)) +
+  geom_point() +
+  scale_x_log10() +  # Use log scale for penalty
+  labs(title = "LASSO Tuning - RMSE vs. Penalty",
+       x = "Penalty (log scale)",
+       y = "RMSE") +
+  theme_minimal()
+```
+RMSE is relatively constant up until 1e-0.5. After that, RMSE increases almost exponentially. The lowest RMSE is observed for the lowest penalty. As the penalty increases, the shrinkage of the coefficients brings the model closer to the null model (since eventually with enough shrinkage, the coefficients would be 0), and the null model has a higher RMSE than the model with all predictors. 
+
+
+Now on to tuning the random forest model.
+```{r}
+set.seed(rngseed)
+
+# Define the model specification using the ranger engine, with fixed trees at 300
+rf_all <- rand_forest(
+  mode = "regression",
+  mtry = tune(),   # mtry will be tuned
+  min_n = tune(),  # min_n will be tuned
+  trees = 300      # Fix trees at 300
+) %>%
+  set_engine("ranger", seed = rngseed)
+
+# Create a workflow
+rf_all_wf <- workflow() %>%
+  add_model(rf_all) %>%
+  add_formula(Y ~ .)
+
+# Set up the tuning grid
+rf_grid <- grid_regular(
+  mtry(range = c(1, 7)),  # mtry between 1 and 7
+  min_n(range = c(1, 21)), # min_n between 1 and 21
+  levels = 7              # 7 levels for each parameter
+)
+
+# Create resampling object using apparent()
+resamples <- apparent(fitting_data_ml)
+
+# Perform tuning with tune_grid()
+rf_tune_results <- tune_grid(
+  rf_all_wf,
+  resamples = resamples,
+  grid = rf_grid,
+  metrics = metric_set(rmse),
+  control = control_grid(save_pred = TRUE)  # Ensure predictions are stored
+)
+#tune::collect_metrics(rf_tune_results)
+# Collect tuning results
+rf_results <- rf_tune_results$.metrics[[1]]
+
+# Print out metrics to ensure they are being correctly extracted
+#print(rf_results)
+
+#Graphing RMSE by tuning parameters
+ggplot(rf_results, aes(x = min_n, y = .estimate, color = factor(mtry))) +
+  geom_point() +
+  scale_x_log10() +  # Use log scale for penalty
+  labs(title = "Random Forest Tuning - RMSE ",
+       x = "min_n",
+       y = "RMSE") +
+  theme_minimal()
+
+
+```
+RMSE is lowest for low values of min_n and high values of mtry. 
+
+### CV tuning
+
+Finally, I'll perform the same modelng strategy above but with 5-fold cross validation 5 times repeated. First, I'll run the lasso model.
+```{r}
+set.seed(rngseed)
+
+# Define LASSO model with a tunable penalty
+lasso_model_cv <- linear_reg(penalty = tune()) %>% 
+  set_engine("glmnet") %>% 
+  set_mode("regression")
+
+# Create workflow
+lasso_wf_cv <- workflow() %>% 
+  add_model(lasso_model_cv) %>% 
+  add_formula(Y ~ .)
+
+# Perform tuning with tune_grid()
+lasso_tune_results_cv <- tune_grid(
+  lasso_wf_cv,
+  resamples = vfold_cv(fitting_data_ml, v = 5, repeats = 5),
+  grid = tibble(penalty = lambda_grid),
+  metrics = metric_set(rmse),
+  control = control_grid(save_pred = TRUE)  # Ensure predictions are stored
+)
+
+# Collect tuning results
+lasso_results_cv <- collect_metrics(lasso_tune_results_cv)
+lasso_results_combo_cv <- lasso_tune_results_cv$.metrics %>%
+  map2_df(.y = seq_along(.), ~ mutate(.x, fold_index = .y))
+#autoplot(lasso_results_cv)
+str(lasso_results_cv)
+
+#Graphing RMSE by penalty 
+ggplot(lasso_results_cv, aes(x = penalty, y = mean)) +
+  geom_point() +
+  scale_x_log10() +  # Use log scale for penalty
+  labs(title = "LASSO Tuning - RMSE vs. Penalty",
+       x = "Penalty (log scale)",
+       y = "RMSE") +
+  theme_minimal()
+
+#Graphing RMSE by penalty by CV fold
+ggplot(lasso_results_combo_cv, aes(x = penalty, y = .estimate, color = factor(fold_index))) +
+  geom_point() +
+  scale_x_log10() +  # Use log scale for penalty
+  labs(title = "LASSO Tuning - RMSE vs. Penalty by CV fold",
+       x = "Penalty (log scale)",
+       y = "RMSE") +
+  theme_minimal()
+```
+The RMSE for most folds follows the same pattern as the non-CV version above. There's also substantial variation in RMSE between the CV folds. 
+
+
+
+Now on to tuning the CV random forest model.
+```{r}
+set.seed(rngseed)
+
+# Define the model specification using the ranger engine, with fixed trees at 300
+rf_all_cv <- rand_forest(
+  mode = "regression",
+  mtry = tune(),   # mtry will be tuned
+  min_n = tune(),  # min_n will be tuned
+  trees = 300      # Fix trees at 300
+) %>%
+  set_engine("ranger", seed = rngseed)
+
+# Create a workflow
+rf_all_wf_cv <- workflow() %>%
+  add_model(rf_all_cv) %>%
+  add_formula(Y ~ .)
+
+
+# Perform tuning with tune_grid()
+rf_tune_results_cv <- tune_grid(
+  rf_all_wf_cv,
+  resamples = vfold_cv(fitting_data_ml, v = 5, repeats = 5),
+  grid = rf_grid,
+  metrics = metric_set(rmse),
+  control = control_grid(save_pred = TRUE)  # Ensure predictions are stored
+)
+
+autoplot(rf_tune_results_cv)
+# Collect tuning results
+#rf_results_cv <- bind_rows(rf_tune_results_cv$.metrics)
+rf_results_combo_cv <- rf_tune_results_cv$.metrics %>%
+  map2_df(.y = seq_along(.), ~ mutate(.x, fold_index = .y))
+str(rf_results_combo_cv)
+# Print out metrics to ensure they are being correctly extracted
+#print(rf_results)
+
+#str(rf_tune_results_cv)
+
+#Graphing RMSE by tuning parameters
+ggplot(rf_results_combo_cv, aes(x = min_n, y = .estimate, color = factor(mtry))) +
+  geom_point() +
+  scale_x_continuous() +  # Use log scale for penalty
+  labs(title = "Random Forest Tuning - RMSE ",
+       x = "min_n",
+       y = "RMSE") +
+  facet_wrap(rf_results_combo_cv$fold_index) +
+  theme_minimal()
+
+```
+
+
+Based on the tuned, random forest, CV model, models randomly selecting at least 4 predictors had comparable performance as models with more predictors for each level of min_n. RMSE was lowest for models with higher mtry values. Models with an mtry value of 5, 6, or 7 behaved similarly, and RMSE decreased with increasing min_n. 
+
+
+## Conclusions
+Based on these results, the LASSO model with a small penalty (e.g., <1) seems to fit best. There is a lot of variation in RMSE by CV fold for the LASSO and random forest models, but in general the CV LASSO model had a lower RMSE (~615) than the CV random forest model (670-690 depending on the number of variables included). Both RMSEs are higher than in the models that did not use CV. Because all predictors are adding information to the model and the random forest model is a conglomeration of many models that use a subset of predictors, it is not surprising that the LASSO model has a lower RMSE.  
+
+
