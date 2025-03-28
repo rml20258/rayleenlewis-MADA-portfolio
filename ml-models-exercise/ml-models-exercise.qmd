@@ -178,7 +178,7 @@ The RMSE from the linear and LASSO models were very similar with RMSEs of 581.Th
 
 ### Tuning the models
 
-
+Now we'll tune each model, starting with the LASSO model.
 
 ```{r}
 library(tidymodels)
@@ -284,7 +284,7 @@ RMSE is lowest for low values of min_n and high values of mtry.
 
 ### CV tuning
 
-Finally, I'll perform the same modelng strategy above but with 5-fold cross validation 5 times repeated. First, I'll run the lasso model.
+Finally, I'll perform the same modeling strategy above but with 5-fold cross validation 5 times repeated. First, I'll run the lasso model.
 ```{r}
 set.seed(rngseed)
 
@@ -312,7 +312,7 @@ lasso_results_cv <- collect_metrics(lasso_tune_results_cv)
 lasso_results_combo_cv <- lasso_tune_results_cv$.metrics %>%
   map2_df(.y = seq_along(.), ~ mutate(.x, fold_index = .y))
 #autoplot(lasso_results_cv)
-str(lasso_results_cv)
+#str(lasso_results_cv)
 
 #Graphing RMSE by penalty 
 ggplot(lasso_results_cv, aes(x = penalty, y = mean)) +
