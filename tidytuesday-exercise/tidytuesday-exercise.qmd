@@ -3,7 +3,7 @@ title: "tidytuesday-exercise"
 format: html
 ---
 
-# Welcome to Tidy Tuesday
+# Welcome to my Tidy Tuesday contribution!
 
 ```{r, include=FALSE, echo=FALSE}
 #loading packages
@@ -177,7 +177,7 @@ test_tt <- testing(split)
 
 ## Research question 
 Does the median time patients spent in the emergency department before leaving from the visit vary by HHS region? Based on the graphic provided in this week's Tidy Tuesday, there does appear to be a regional trend in ER visit length, but this doesn't account for other factors. My hypothesis is that there will be significant differences in ER visit length by region, with regions 3 and 4 having higher wait times and region 8 having lower wait times on average, after adjusting for additional factors that may serve as proxies for higher standards of care (e.g., percent of healthcare workers vaccinated against COVID, percent of patients that left without being seen).
-
+![](visits.png)
 ![](regional-offices.png)
 
 
