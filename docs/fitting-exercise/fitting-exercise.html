@@ -159,6 +159,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../ml-models-exercise/ml-models-exercise.html">
  <span class="dropdown-text">Machine Learning</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../tidytuesday-exercise/tidytuesday-exercise.html">
+ <span class="dropdown-text">Tidy Tuesday exercise</span></a>
+  </li>  
     </ul>
   </li>
 </ul>
@@ -351,23 +355,23 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tbl_summary</span>(data4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div id="mbtnxdpayh" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#mbtnxdpayh table {
+<div id="wqqemrzsfz" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#wqqemrzsfz table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#mbtnxdpayh thead, #mbtnxdpayh tbody, #mbtnxdpayh tfoot, #mbtnxdpayh tr, #mbtnxdpayh td, #mbtnxdpayh th {
+#wqqemrzsfz thead, #wqqemrzsfz tbody, #wqqemrzsfz tfoot, #wqqemrzsfz tr, #wqqemrzsfz td, #wqqemrzsfz th {
   border-style: none;
 }
 
-#mbtnxdpayh p {
+#wqqemrzsfz p {
   margin: 0;
   padding: 0;
 }
 
-#mbtnxdpayh .gt_table {
+#wqqemrzsfz .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -393,12 +397,12 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-left-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_caption {
+#wqqemrzsfz .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#mbtnxdpayh .gt_title {
+#wqqemrzsfz .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -410,7 +414,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-bottom-width: 0;
 }
 
-#mbtnxdpayh .gt_subtitle {
+#wqqemrzsfz .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -422,7 +426,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-top-width: 0;
 }
 
-#mbtnxdpayh .gt_heading {
+#wqqemrzsfz .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -434,13 +438,13 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-right-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_bottom_border {
+#wqqemrzsfz .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_col_headings {
+#wqqemrzsfz .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -455,7 +459,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-right-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_col_heading {
+#wqqemrzsfz .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -475,7 +479,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   overflow-x: hidden;
 }
 
-#mbtnxdpayh .gt_column_spanner_outer {
+#wqqemrzsfz .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -487,15 +491,15 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   padding-right: 4px;
 }
 
-#mbtnxdpayh .gt_column_spanner_outer:first-child {
+#wqqemrzsfz .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#mbtnxdpayh .gt_column_spanner_outer:last-child {
+#wqqemrzsfz .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#mbtnxdpayh .gt_column_spanner {
+#wqqemrzsfz .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -507,11 +511,11 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   width: 100%;
 }
 
-#mbtnxdpayh .gt_spanner_row {
+#wqqemrzsfz .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#mbtnxdpayh .gt_group_heading {
+#wqqemrzsfz .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -537,7 +541,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   text-align: left;
 }
 
-#mbtnxdpayh .gt_empty_group_heading {
+#wqqemrzsfz .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -552,15 +556,15 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   vertical-align: middle;
 }
 
-#mbtnxdpayh .gt_from_md > :first-child {
+#wqqemrzsfz .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#mbtnxdpayh .gt_from_md > :last-child {
+#wqqemrzsfz .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#mbtnxdpayh .gt_row {
+#wqqemrzsfz .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -579,7 +583,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   overflow-x: hidden;
 }
 
-#mbtnxdpayh .gt_stub {
+#wqqemrzsfz .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -592,7 +596,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   padding-right: 5px;
 }
 
-#mbtnxdpayh .gt_stub_row_group {
+#wqqemrzsfz .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -606,15 +610,15 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   vertical-align: top;
 }
 
-#mbtnxdpayh .gt_row_group_first td {
+#wqqemrzsfz .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#mbtnxdpayh .gt_row_group_first th {
+#wqqemrzsfz .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#mbtnxdpayh .gt_summary_row {
+#wqqemrzsfz .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -624,16 +628,16 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   padding-right: 5px;
 }
 
-#mbtnxdpayh .gt_first_summary_row {
+#wqqemrzsfz .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_first_summary_row.thick {
+#wqqemrzsfz .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#mbtnxdpayh .gt_last_summary_row {
+#wqqemrzsfz .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -643,7 +647,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-bottom-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_grand_summary_row {
+#wqqemrzsfz .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -653,7 +657,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   padding-right: 5px;
 }
 
-#mbtnxdpayh .gt_first_grand_summary_row {
+#wqqemrzsfz .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -663,7 +667,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-top-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_last_grand_summary_row_top {
+#wqqemrzsfz .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -673,11 +677,11 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-bottom-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_striped {
+#wqqemrzsfz .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#mbtnxdpayh .gt_table_body {
+#wqqemrzsfz .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -686,7 +690,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-bottom-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_footnotes {
+#wqqemrzsfz .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -700,7 +704,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-right-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_footnote {
+#wqqemrzsfz .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -709,7 +713,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   padding-right: 5px;
 }
 
-#mbtnxdpayh .gt_sourcenotes {
+#wqqemrzsfz .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -723,7 +727,7 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   border-right-color: #D3D3D3;
 }
 
-#mbtnxdpayh .gt_sourcenote {
+#wqqemrzsfz .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -731,72 +735,72 @@ dbl (17): ID, CMT, EVID, EVI2, MDV, DV, LNDV, AMT, TIME, DOSE, OCC, RATE, AG...
   padding-right: 5px;
 }
 
-#mbtnxdpayh .gt_left {
+#wqqemrzsfz .gt_left {
   text-align: left;
 }
 
-#mbtnxdpayh .gt_center {
+#wqqemrzsfz .gt_center {
   text-align: center;
 }
 
-#mbtnxdpayh .gt_right {
+#wqqemrzsfz .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#mbtnxdpayh .gt_font_normal {
+#wqqemrzsfz .gt_font_normal {
   font-weight: normal;
 }
 
-#mbtnxdpayh .gt_font_bold {
+#wqqemrzsfz .gt_font_bold {
   font-weight: bold;
 }
 
-#mbtnxdpayh .gt_font_italic {
+#wqqemrzsfz .gt_font_italic {
   font-style: italic;
 }
 
-#mbtnxdpayh .gt_super {
+#wqqemrzsfz .gt_super {
   font-size: 65%;
 }
 
-#mbtnxdpayh .gt_footnote_marks {
+#wqqemrzsfz .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#mbtnxdpayh .gt_asterisk {
+#wqqemrzsfz .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#mbtnxdpayh .gt_indent_1 {
+#wqqemrzsfz .gt_indent_1 {
   text-indent: 5px;
 }
 
-#mbtnxdpayh .gt_indent_2 {
+#wqqemrzsfz .gt_indent_2 {
   text-indent: 10px;
 }
 
-#mbtnxdpayh .gt_indent_3 {
+#wqqemrzsfz .gt_indent_3 {
   text-indent: 15px;
 }
 
-#mbtnxdpayh .gt_indent_4 {
+#wqqemrzsfz .gt_indent_4 {
   text-indent: 20px;
 }
 
-#mbtnxdpayh .gt_indent_5 {
+#wqqemrzsfz .gt_indent_5 {
   text-indent: 25px;
 }
 
-#mbtnxdpayh .katex-display {
+#wqqemrzsfz .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#mbtnxdpayh div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#wqqemrzsfz div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>

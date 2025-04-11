@@ -1,0 +1,520 @@
+---
+title: "tidytuesday-exercise"
+format: html
+---
+
+# Welcome to Tidy Tuesday
+
+```{r, include=FALSE, echo=FALSE}
+#loading packages
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+library(naniar)
+library(procs)
+library(rsample)
+
+library(gt)
+library(gtsummary)
+library(caret)
+library(pROC)
+library(quarto)
+library(GGally)
+library(tune)
+library(workflowsets)
+library(parsnip)
+library(ggplot2)
+
+library(glmnet) #LASSO
+library(ranger) #Random forest plots
+
+
+```
+
+## Loading the data
+
+Data have been downloaded from [Github](https://github.com/rfordatascience/tidytuesday/tree/main/data/2025/2025-04-08).
+
+Data include state-level measures of "timely and effective care" from Medicare.
+
+```{r}
+#Importing the downloaded CSV
+tt_raw <- read_csv(here("tidytuesday-exercise", "data", "care_state.csv")) 
+
+#Checking the general structure to make sure it matches the data dictionary
+str(tt_raw)
+summary(tt_raw)
+```
+
+## Exploratory data analysis
+#### Tables of each categorical variable and histogram of score
+
+```{r}
+
+table(tt_raw$state)
+#All states and US territories have 22 entries
+
+table(tt_raw$condition)
+# 6 categories, ED is the most common at 672
+
+table(tt_raw$measure_id)
+#22 measures with 56 observations each
+
+#table(tt_raw$measure_name)
+#56 of each measure name except "Average time patients spent in the emergency department before being sent home A lower number of minutes is better (high)" which has 112
+#Not including this code in the website render because the table is too wide to be useful on the page
+
+table(tt_raw$footnote)
+#3 footnotes
+
+#Histogram of score for each measure
+ggplot(tt_raw, aes(x = score)) + geom_histogram() + facet_wrap(vars(measure_id))
+
+```
+
+
+#### Taking a look at the data for a single state to better understand the data
+```{r}
+tt_raw %>% 
+  filter(state == "WV") %>%
+  view()
+#Including to share my process, output not included since it's a large table
+```
+
+#### Reviewing missingness
+```{r}
+#Looking at missing data for each variable
+gg_miss_var(tt_raw) + labs(title = "Number missing for each variable")
+#Footnote and score have missing data, the other variables look pretty complete
+
+
+gg_miss_var(tt_raw, facet = measure_id) + 
+  labs(title = "Number missing for each variable for each measure_id")
+#All measure_id's have some missingness on score, but OP_31 has a LOT of missingness comparatively
+
+#proc_freq(tt_raw, measure_name*measure_id)
+#This confirmed each measure_id corresponds to one measure name - 
+  #not including because it isn't useful to actually look at
+
+#Visualization of distribution of score including missiness
+ggplot(tt_raw, 
+       aes(y = measure_id, 
+           x = score)) + 
+  geom_miss_point()
+
+
+```
+
+#### Mean score by measure
+```{r}
+#Looking at the mean score for each measure_id  
+means <- proc_means(tt_raw, var = score, by = measure_id)     
+print(means, n = 22)
+```
+Notes: it's very unclear what the differences are between the various OP_18b and OP_18c variables. The low, moderate, high, very high indicators don't have any context, so I'll be focused on OP_18b and OP_18c.
+
+## Data wrangling
+Currently the data are long, but a wide format would be better for the analysis I'd like to perform. This code chunk performs the following data cleaning steps:
+
+1. Reformats the data so that each row is a state/US territory
+2. Condition, measure name, start date, end date, and footnote are dropped
+3. HHS region factor variable is created
+4. Variables are restricted to HHS region, state, average time spent in ED before being sent home, % healthcare workers vaccinated against COVID, percent left without being seen, and safe use of opiods
+5. Rows with any missing values are deleted
+
+The final dataset includes data from all 50 US states, District of Columbia, and Puerto Rico.
+
+```{r}
+#Transposing data so each state is a row and the score of each measure is in the cell, adding a variable for HHS region, and removing low/moderate/high/very high versions of OP_18b and OP_18c
+tt_transpose <- tt_raw %>%
+  pivot_wider(id_cols = state, names_from = measure_id, values_from = score) %>%
+  mutate(region = as.factor(if_else(state %in% c("CT","ME","MA","NH","RI","VT"), 1, 
+                  if_else(state %in% c("NJ","NY","PR","VI"), 2, 
+                  if_else(state %in% c("DE","DC","MD","PA","VA","WV"), 3,  
+                  if_else(state %in% c("AL","FL","GA","KY","MS","NC","SC","TN"), 4,  
+                  if_else(state %in% c("IL","IN","MI","MN","OH","WI"), 5,  
+                  if_else(state %in% c("AR","LA","NM","OK","TX"), 6,  
+                  if_else(state %in% c("IA","KS","MO","NE"), 7,  
+                  if_else(state %in% c("CO","MT","ND","SD","UT","WY"), 8,  
+                  if_else(state %in% c("AZ","CA","HI","NV","GU","MP","AS"), 9,  
+                  if_else(state %in% c("AK","ID","OR","WA"), 10, NA       
+                          )))))))))))) %>%
+  select(-OP_18c_HIGH_MIN, -OP_18c_LOW_MIN, -OP_18c_MEDIUM_MIN, -OP_18c_VERY_HIGH_MIN, -OP_18b_HIGH_MIN, -OP_18b_LOW_MIN, -OP_18b_MEDIUM_MIN, -OP_18b_VERY_HIGH_MIN)
+
+  
+#Looking at the first 6 rows, looks like the transpose worked
+head(tt_transpose)
+
+#Restricted data to HHS region, state, average time spent in ED before being sent home, % healthcare workers vaccinated against COVID, percent left without being seen, and safe use of opiods
+tt_mini <- tt_transpose %>%
+  select(region, state, OP_18b, HCP_COVID_19, SAFE_USE_OF_OPIOIDS, OP_22) 
+
+#Checking to see what percent of cases are complete
+pct_complete_case(tt_mini)
+# ~93% cases are complete, so I'll restrict to complete cases
+
+#Creating the final analytic dataset dropping rows with missing values (4 rows were dropped)
+tt <- tt_mini %>%
+  drop_na()
+
+#Looking at the dropped rows
+dropped_rows <- anti_join(tt_mini, tt)
+#The following American territories were dropped: 
+  #American Samoa, Guam, Northern Mariana Islands, and Virgin Islands
+```
+
+```{r}
+#In preparation for modeling, I'm splitting the data into training (75%) and test (25%) data
+seed = 345245
+set.seed(seed)  # setting seed
+split <- initial_split(tt, prop = 0.75)
+
+train_tt <- training(split)
+test_tt <- testing(split)
+```
+
+
+## Research question 
+Does the median time patients spent in the emergency department before leaving from the visit vary by HHS region? Based on the graphic provided in this week's Tidy Tuesday, there does appear to be a regional trend in ER visit length, but this doesn't account for other factors. My hypothesis is that there will be significant differences in ER visit length by region, with regions 3 and 4 having higher wait times and region 8 having lower wait times on average, after adjusting for additional factors that may serve as proxies for higher standards of care (e.g., percent of healthcare workers vaccinated against COVID, percent of patients that left without being seen).
+
+![](regional-offices.png)
+
+
+## Modeling
+I will address this research question using 10-fold cross validation on multivariable linear regression, LASSO model, and random forest model. The LASSO and random forest models were both tuned using a grid of tuning parameter values.
+
+### Multivariable linear regression
+
+The first model I'll consider is a multivariable linear regression model. My outcome variable is  median length of visit (OP_18b). The "exposure" is HHS region coded as a factor. State-level characteristics considered for adjustment are % healthcare workers vaccinated against COVID (HCP_COVID_19), percent left without being seen (OP_22), and safe use of opioids (SAFE_USE_OF_OPIOIDS). 
+```{r}
+# Define a linear model with all predictors
+lm_all_tt <- linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression")
+
+lm_all_wf_tt <- workflow() %>% 
+  add_model(lm_all_tt) %>% 
+  add_formula(OP_18b ~ region + HCP_COVID_19 + OP_22 + SAFE_USE_OF_OPIOIDS)
+
+
+lm_cv_results_tt <- fit_resamples(
+  lm_all_wf_tt,
+  resamples = vfold_cv(train_tt, v = 10),
+  metrics = metric_set(rmse, rsq),
+  control = control_resamples(save_pred = TRUE)
+)
+
+# View the performance
+collect_metrics(lm_cv_results_tt)
+
+# Fit model on the training data
+lm_all_fit_tt <- lm_all_wf_tt %>% fit(train_tt)
+
+# Compute predictions on training data
+preds_lm_all_tt <- predict(lm_all_fit_tt, train_tt) %>% bind_cols(train_tt)
+
+# Compute RMSE for both models
+rmse_lm_all_tt <- rmse(preds_lm_all_tt, truth = OP_18b, estimate = .pred)
+paste0("RMSE linear model:", rmse_lm_all_tt$.estimate)
+
+
+```
+
+The mean (se) RMSE for the CV models was 36.26 (9.42). This will be used to for comparison to the LASSO and Randow Forest models.
+
+```{r}
+lm_coefs <- tidy(lm_all_fit_tt)
+print(lm_coefs)
+
+# Compute predictions
+preds_lm_all_tt <- predict(lm_all_fit_tt, train_tt) %>% bind_cols(train_tt)
+
+# Compute RMSE
+rmse_lm_all_tt <- rmse(preds_lm_all_tt, truth = OP_18b, estimate = .pred)
+paste0("RMSE linear model:", rmse_lm_all_tt$.estimate)
+
+# Plot observed vs. predicted
+ggplot(preds_lm_all_tt, aes(x = OP_18b, y = .pred)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  labs(title = "Observed vs. Predicted Values - Linear Regression",
+       x = "Observed",
+       y = "Predicted") +
+  theme_minimal()
+```
+Based on the observed vs predicted plot, the model fits the data decently well.
+
+### LASSO model
+
+Next, I'll perform the same modeling strategy above but with 5-fold cross validation 5 times repeated. First, I'll run the lasso model.
+```{r}
+set.seed(seed)
+
+# Define a grid of penalty values (lambda) from 1E-5 to 1E2 on a log scale
+lambda_grid_tt <- 10^seq(log10(1E-5), log10(1E2), length.out = 50)
+
+# Define LASSO model with a tunable penalty
+lasso_model_cv_tt <- linear_reg(penalty = tune()) %>% 
+  set_engine("glmnet") %>% 
+  set_mode("regression")
+
+# Create workflow
+lasso_wf_cv_tt <- workflow() %>% 
+  add_model(lasso_model_cv_tt) %>% 
+  add_formula(OP_18b ~ region + HCP_COVID_19 + OP_22 + SAFE_USE_OF_OPIOIDS)
+
+# Perform tuning with tune_grid()
+lasso_tune_results_cv_tt <- tune_grid(
+  lasso_wf_cv_tt,
+  resamples = vfold_cv(train_tt, v = 10, repeats = 10),
+  grid = tibble(penalty = lambda_grid_tt),
+  metrics = metric_set(rmse),
+  control = control_grid(save_pred = TRUE)  # Ensure predictions are stored
+)
+
+# Collect tuning results
+lasso_results_cv_tt <- collect_metrics(lasso_tune_results_cv_tt)
+lasso_results_combo_cv_tt <- lasso_tune_results_cv_tt$.metrics %>%
+  map2_df(.y = seq_along(.), ~ mutate(.x, fold_index = .y))
+#autoplot(lasso_results_cv)
+#str(lasso_results_cv)
+
+#Graphing RMSE by penalty 
+ggplot(lasso_results_cv_tt, aes(x = penalty, y = mean)) +
+  geom_point() +
+  scale_x_log10() +  # Use log scale for penalty
+  labs(title = "LASSO Tuning - RMSE vs. Penalty",
+       x = "Penalty (log scale)",
+       y = "RMSE") +
+  theme_minimal()
+
+#Graphing RMSE by penalty by CV fold
+ggplot(lasso_results_combo_cv_tt, aes(x = penalty, y = .estimate, color = factor(fold_index))) +
+  geom_point() +
+  scale_x_log10() +  # Use log scale for penalty
+  labs(title = "LASSO Tuning - RMSE vs. Penalty by CV fold",
+       x = "Penalty (log scale)",
+       y = "RMSE") +
+  theme_minimal()
+```
+Based on the figures above, there is a tuning paramter that produces the lowest RMSE. I'll extract this tuning parameter and use this for the final LASSO model. Then, I'll extract the coefficients from this model. If the LASSO model is selected as the final model, I'll use these for answering the research question. 
+
+```{r}
+# Find best penalty value (lowest RMSE)
+best_penalty <- select_best(lasso_tune_results_cv_tt, metric = "rmse")
+
+# Finalize workflow with best penalty
+final_lasso_wf <- finalize_workflow(lasso_wf_cv_tt, best_penalty)
+
+# Fit final model on full training data
+final_lasso_fit <- fit(final_lasso_wf, data = train_tt)
+
+# Extract the fitted parsnip model
+final_model_fit <- extract_fit_parsnip(final_lasso_fit)
+# Find best penalty value (lowest RMSE)
+best_penalty <- select_best(lasso_tune_results_cv_tt, metric = "rmse")
+# View the actual lambda values used during glmnet training
+actual_lambdas <- final_model_fit$fit$lambda
+# Find the closest lambda value glmnet actually used
+best_penalty_value <- best_penalty$penalty
+closest_lambda <- actual_lambdas[which.min(abs(actual_lambdas - best_penalty_value))]
+
+# Final model definition with the best penalty
+lasso_model_final <- linear_reg(penalty = best_penalty$penalty) %>%
+  set_engine("glmnet") %>%
+  set_mode("regression")
+
+# Final workflow with fixed penalty
+final_lasso_wf <- workflow() %>%
+  add_model(lasso_model_final) %>%
+  add_formula(OP_18b ~ region + HCP_COVID_19 + OP_22 + SAFE_USE_OF_OPIOIDS)
+
+# Fit to the full training data
+final_lasso_fit <- fit(final_lasso_wf, data = train_tt)
+
+
+# Extract the underlying glmnet fit object
+glmnet_fit <- extract_fit_engine(final_lasso_fit)  # This is a raw glmnet object
+
+# Extract the best penalty (lambda)
+best_lambda <- best_penalty$penalty
+
+# Get coefficients at that lambda value
+coef_matrix <- coef(glmnet_fit, s = best_lambda)
+
+# Convert to tidy tibble
+lasso_coefs_df <- as.matrix(coef_matrix) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("term") %>%
+  rename(estimate = `s1`)  # the coefficient column is named '1' by default
+
+#Printing model with lowest RMSE
+lowest_rmse <- lasso_tune_results_cv_tt %>%
+  collect_metrics() %>%
+  filter(.metric == "rmse") %>%
+  arrange(mean) %>%
+  slice(1)
+
+# Optional: filter out zero coefficients
+nonzero_lasso_coefs <- lasso_coefs_df %>%
+  filter(estimate != 0)
+
+# Print non-zero coefficients
+print(nonzero_lasso_coefs)
+
+```
+The best lambda value is 5.18. For this model, several of the coefficients for region were set to 0, meaning the regions 1, 4, 6, 9, and 10 were not substantially different from each other after accounting for COVID vaccination among healthcare providers and the percent of people who leave before getting treated. The RMSE for this model (32.4) is lower than the RMSE for the linear regression model using CV (36.3).
+
+### Random forest 
+
+The final model being considered is the random forest model. A tuning grid was set up to select 4 values between 1 and 4 for the number of predictors to try and 4 values for the minimum node size between 1 and 16. 
+```{r}
+set.seed(seed)
+
+# Set up the tuning grid
+rf_grid_tt <- grid_regular(
+  mtry(range = c(1, 4)),  # mtry between 1 and 4
+  min_n(range = c(1, 16)), # min_n between 1 and 16
+  levels = 4              # 4 levels for each parameter
+)
+
+# Define the model specification using the ranger engine, with fixed trees at 300
+rf_all_cv_tt <- rand_forest(
+  mode = "regression",
+  mtry = tune(),   # mtry will be tuned
+  min_n = tune(),  # min_n will be tuned
+  trees = 300      # Fix trees at 300
+) %>%
+  set_engine("ranger", seed = seed, importance = "impurity") 
+
+# Create a workflow
+rf_all_wf_cv_tt <- workflow() %>%
+  add_model(rf_all_cv_tt) %>%
+  add_formula(OP_18b ~ region + HCP_COVID_19 + OP_22 + SAFE_USE_OF_OPIOIDS)
+
+set.seed(seed)
+# Perform tuning with tune_grid()
+rf_tune_results_cv_tt <- tune_grid(
+  rf_all_wf_cv_tt,
+  resamples = vfold_cv(train_tt, v = 10, repeats = 10),
+  grid = rf_grid_tt,
+  metrics = metric_set(rmse),
+  control = control_grid(save_pred = TRUE)  # Ensure predictions are stored
+)
+#show_notes(rf_tune_results_cv_tt)
+autoplot(rf_tune_results_cv_tt)
+
+# Collect tuning results
+#rf_results_cv <- bind_rows(rf_tune_results_cv$.metrics)
+rf_results_combo_cv_tt <- rf_tune_results_cv_tt$.metrics %>%
+  map2_df(.y = seq_along(.), ~ mutate(.x, fold_index = .y))
+str(rf_results_combo_cv_tt)
+# Print out metrics to ensure they are being correctly extracted
+#print(rf_results)
+
+#str(rf_tune_results_cv)
+
+#I want to look at the tuning parameters and the effect on RMSE, so I'm looking at a randomly selected 25 runs (from the CV)
+# Randomly select 25 folds to display
+set.seed(seed)  # For reproducibility
+folds_to_plot <- sample(unique(rf_results_combo_cv_tt$fold_index), 25)
+
+# Filter the results to only include those folds
+rf_subset_cv_tt <- rf_results_combo_cv_tt %>%
+  filter(fold_index %in% folds_to_plot)
+
+# Plot RMSE by tuning parameters for the selected folds
+ggplot(rf_subset_cv_tt, aes(x = min_n, y = .estimate, color = factor(mtry))) +
+  geom_point() +
+  labs(title = "Random Forest Tuning - RMSE (Sample of 25 Folds)",
+       x = "min_n",
+       y = "RMSE") +
+  facet_wrap(~ fold_index) +
+  theme_minimal()
+
+```
+
+For tuning parameters, RMSE is lowest with a minimal node size of 1 with 2 randomly selected predictors. A minimum node size of 1 isn't particularly helpful since theoretically all observations could be their own node. 
+```{r}
+# Step 1: Get best parameters (lowest RMSE)
+best_params <- select_best(rf_tune_results_cv_tt, metric = "rmse")
+
+# Step 2: Finalize the workflow
+final_rf_wf <- finalize_workflow(rf_all_wf_cv_tt, best_params)
+
+# Step 3: Fit the final model on full training data
+final_rf_fit <- fit(final_rf_wf, data = train_tt)
+
+# Step 4: Extract variable importance from the ranger engine
+rf_engine_fit <- extract_fit_engine(final_rf_fit)
+
+# Step 5: Get variable importance as a tidy data frame
+vip_df <- as.data.frame(rf_engine_fit$variable.importance) %>%
+  tibble::rownames_to_column("variable") %>%
+  arrange(desc(rf_engine_fit$variable.importance))
+
+# View top variables
+print(vip_df)
+
+```
+
+When using the best_select function, the best model was selected using 1 as the minimum node size and 2 as the number of selected predictors. Looking more closely at this option, the most important variable was region followed by % of healthcare workers vaccinated against COVID. This doesn't give us any information about the differences in median visit time between regions though, just that region was important in predicting median visit time.
+
+
+### Final model
+My model preference for this analysis is the LASSO model. This model can be used to make and interpret comparisons between HHS regions (unlike the Random Forest model), and it has a lower RMSE than the linear regression model. The reduction of some region coefficients to 0 also makes the model a bit more interpretable, because this inherently groups regions similar in visit length together into one comparison group. Betas for other regions can be interpreted as differences in visit length between a region and the comparison group of regions.
+
+As a final step, I am running the test data through the LASSO model.
+```{r}
+# Make predictions on test data
+lasso_test_preds <- predict(final_lasso_fit, new_data = test_tt) %>%
+  bind_cols(test_tt)
+
+# Calculate RMSE
+lasso_test_rmse <- rmse(lasso_test_preds, truth = OP_18b, estimate = .pred)
+
+# Print RMSE
+cat("Test RMSE:", lasso_test_rmse$.estimate, "\n")
+# Extract coefficients at the selected lambda
+coef_matrix_test <- coef(glmnet_fit, s = best_penalty$penalty)
+
+# Convert to tidy format
+lasso_coefs_df_test <- as.matrix(coef_matrix_test) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("term") %>%
+  rename(estimate = `s1`)  # 's1' might differ depending on glmnet version
+
+# Filter for non-zero coefficients (variables actually used in the model)
+nonzero_lasso_coefs_test <- lasso_coefs_df_test %>%
+  filter(estimate != 0)
+
+# Print coefficients
+print(nonzero_lasso_coefs_test)
+ggplot(lasso_test_preds, aes(x = OP_18b, y = .pred)) +
+  geom_point(color = "steelblue", alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  labs(title = "LASSO Model: Observed vs Predicted (Test Set)",
+       x = "Observed",
+       y = "Predicted") +
+  theme_minimal()
+
+```
+
+The RMSE was 39.3. This model didn't particularly fit the data well (several points are far from the observed vs predicted line), but this could just be luck of the draw in which points ended up in the test data set. 
+
+## Discussion
+Multivariable linear regression, LASSO regression, and Random Forest models were all performed using 10-fold cross validation. LASSO and random forest models were both tuned prior to selection of the final models; tuning parameters that resulted in the lowest RMSE values were selected for the final models. The LASSO model was selected as the final model due to interpretability and performance (i.e., lower RMSE) improvements over the other models.
+
+Based on the results from the LASSO regression model, after adjusting for the percent of healthcare workers vaccinated against COVID and the percent of people who leave without receiving treatment, HHS regions 2 and 3 had higher median visit lengths compared to regions 1, 4, 6, 9 and 10. Region 2 (NJ, NY, PR, VI) had the highest visit length on average, which was 42 minutes longer on average. Region 7 (IA, KS, MO, NE) had the shortest visit length on average, by 3 minutes. These findings are corroborated in the box plot below of median visit length for each region, with means shown in red dots. Region 2 has the highest median and mean visit length and region 7 the lowest.
+
+```{r}
+ggplot(train_tt, aes(x = factor(region), y = OP_18b)) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  stat_summary(fun = mean, geom = "point", shape = 20, size = 3, color = "red") +
+  labs(title = "Boxplot with Means",
+       x = "Group",
+       y = "Outcome") +
+  theme_minimal()
+```
+
