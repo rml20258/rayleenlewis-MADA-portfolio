@@ -216,7 +216,7 @@ preds_lm_all_tt <- predict(lm_all_fit_tt, train_tt) %>% bind_cols(train_tt)
 
 # Compute RMSE for both models
 rmse_lm_all_tt <- rmse(preds_lm_all_tt, truth = OP_18b, estimate = .pred)
-paste0("RMSE linear model:", rmse_lm_all_tt$.estimate)
+#paste0("RMSE linear model:", rmse_lm_all_tt$.estimate)
 
 
 ```
@@ -354,7 +354,8 @@ lowest_rmse <- lasso_tune_results_cv_tt %>%
   collect_metrics() %>%
   filter(.metric == "rmse") %>%
   arrange(mean) %>%
-  slice(1)
+  slice(1) %>%
+  print()
 
 # Optional: filter out zero coefficients
 nonzero_lasso_coefs <- lasso_coefs_df %>%
@@ -486,11 +487,11 @@ lasso_coefs_df_test <- as.matrix(coef_matrix_test) %>%
   rename(estimate = `s1`)  # 's1' might differ depending on glmnet version
 
 # Filter for non-zero coefficients (variables actually used in the model)
-nonzero_lasso_coefs_test <- lasso_coefs_df_test %>%
-  filter(estimate != 0)
+#nonzero_lasso_coefs_test <- lasso_coefs_df_test %>%
+#  filter(estimate != 0)
 
 # Print coefficients
-print(nonzero_lasso_coefs_test)
+#print(nonzero_lasso_coefs_test)
 ggplot(lasso_test_preds, aes(x = OP_18b, y = .pred)) +
   geom_point(color = "steelblue", alpha = 0.6) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
